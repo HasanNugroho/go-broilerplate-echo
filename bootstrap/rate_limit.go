@@ -1,10 +1,10 @@
-package lib
+package bootstrap
 
 import (
 	"log"
 	"net"
 
-	"github.com/HasanNugroho/starter-golang/pkg/config"
+	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 	sredis "github.com/ulule/limiter/v3/drivers/store/redis"

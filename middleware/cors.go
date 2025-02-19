@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/HasanNugroho/starter-golang/pkg/config"
+	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

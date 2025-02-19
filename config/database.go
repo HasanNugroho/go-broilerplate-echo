@@ -7,48 +7,61 @@ import (
 	"time"
 
 	utils "github.com/HasanNugroho/starter-golang/pkg/utlis"
-	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
-type Configuration struct {
-	Version  string
-	Database DatabaseConfig
-	Server   ServerConfig
-	Security SecurityConfig
+type DatabaseConfig struct {
+	RDBMS RDBMS // relational database
+	REDIS REDIS // redis database
 }
 
-var configAll *Configuration
-
-// Load environment variables
-func InitEnv() error {
-	return godotenv.Load()
+// RDBMS - relational database variables
+type RDBMS struct {
+	Activate bool
+	Env      struct {
+		Driver      string
+		Host        string
+		Port        string
+		TimeZone    string
+		Synchronize bool
+		LogLevel    int
+	}
+	Access struct {
+		DbName string
+		User   string
+		Pass   string
+	}
+	Ssl struct {
+		Sslmode    string
+		MinTLS     string
+		RootCA     string
+		ServerCert string
+		ClientCert string
+		ClientKey  string
+	}
+	Conn struct {
+		MaxIdleConns    int
+		MaxOpenConns    int
+		ConnMaxLifetime time.Duration
+	}
+	Client *gorm.DB
 }
 
-// InitConfig initializes the application configuration
-func InitConfig() error {
-	if err := InitEnv(); err != nil {
-		return err
+// REDIS - redis database variables
+type REDIS struct {
+	Activate bool
+	Env      struct {
+		Host     string
+		Port     string
+		Password string
+		DB       string
 	}
-
-	dbConfig, err := loadDatabaseConfig()
-	if err != nil {
-		return err
+	Conn struct {
+		PoolSize int
+		ConnTTL  int
 	}
-
-	config := Configuration{
-		Version:  strings.TrimSpace(os.Getenv("VERSION")),
-		Server:   loadServerConfig(),
-		Database: dbConfig,
-		Security: loadSecurityConfig(),
-	}
-
-	configAll = &config
-	return nil
-}
-
-// GetConfig - return all the config variables
-func GetConfig() *Configuration {
-	return configAll
+	Client *redis.Client
 }
 
 // loadDatabaseConfig loads all database-related configuration
@@ -146,21 +159,5 @@ func loadRedisConfig() (databaseConfig DatabaseConfig, err error) {
 	databaseConfig.REDIS.Conn.PoolSize = utils.ToInt(os.Getenv("POOLSIZE"), defaultPoolSize)
 	databaseConfig.REDIS.Conn.ConnTTL = utils.ToInt(os.Getenv("CONNTTL"), defaultConnTTL)
 
-	return
-}
-
-// server - port and env
-func loadServerConfig() (serverConfig ServerConfig) {
-	serverConfig.ServerHost = strings.TrimSpace(os.Getenv("APP_HOST"))
-	serverConfig.ServerPort = strings.TrimSpace(os.Getenv("APP_PORT"))
-	serverConfig.ServerEnv = strings.ToLower(strings.TrimSpace(os.Getenv("APP_ENV")))
-	serverConfig.AllowedOrigins = strings.Split(strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS")), ",")
-	return
-}
-
-func loadSecurityConfig() (securityConfig SecurityConfig) {
-	securityConfig.CheckOrigin = utils.ToBool(os.Getenv("ACTIVATE_ORIGIN_VALIDATION"), false)
-	securityConfig.RateLimit = utils.ToString(os.Getenv("RATE_LIMIT"), "100-M")
-	securityConfig.TrustedPlatform = utils.ToString(os.Getenv("TRUSTED_PLATFORM"), "X-Real-Ip")
 	return
 }

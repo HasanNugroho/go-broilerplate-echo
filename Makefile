@@ -11,20 +11,18 @@ build:
 run:
 	@go run cmd/main.go
 
-# Create DB container
-docker-run:
-	@if docker compose up --build 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up --build; \
-	fi
+# watch the application (dev only)
+watch:
+	@air -c .air.toml
 
-# Shutdown DB container
+setup:
+	go mod download
+	cp .env.example .env
+
+# build dev container
+docker-run:
+	docker compose --env-file .env -f build/docker-compose.dev.yml up --build
+
+# Shutdown dev container
 docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
+	docker compose down

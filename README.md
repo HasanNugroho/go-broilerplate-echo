@@ -1,8 +1,30 @@
 # starter-golang
 starter of golang project
 
-## Install
-1. install dependency ```go mod download```
-2. run ```go run cmd/main.go```
+## Setup project
+```bash    
+$ make setup
+```
 
-https://github.com/pilinux/gorest
+## Build
+```bash    
+$ make build
+```
+
+## Run
+```bash    
+$ make run
+```
+
+## Run Dev
+```bash    
+$ make watch
+```
+
+
+## Build to Docker
+```bash    
+$ make docker-run
+```
+
+### Reference : https://github.com/pilinux/gorest
