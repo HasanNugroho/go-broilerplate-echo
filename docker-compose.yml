@@ -1,0 +1,15 @@
+services:
+  psql_bp:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DBNAME}
+      POSTGRES_USER: ${DBUSER}
+      POSTGRES_PASSWORD: ${DBPASS}
+    ports:
+      - "${DBPORT}:5432"
+    volumes:
+      - psql_volume_bp:/var/lib/postgresql/data
+
+volumes:
+  psql_volume_bp:

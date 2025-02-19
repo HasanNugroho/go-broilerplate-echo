@@ -18,10 +18,12 @@ type DatabaseConfig struct {
 type RDBMS struct {
 	Activate bool
 	Env      struct {
-		Driver   string
-		Host     string
-		Port     string
-		TimeZone string
+		Driver      string
+		Host        string
+		Port        string
+		TimeZone    string
+		Synchronize bool
+		LogLevel    int
 	}
 	Access struct {
 		DbName string
@@ -40,9 +42,6 @@ type RDBMS struct {
 		MaxIdleConns    int
 		MaxOpenConns    int
 		ConnMaxLifetime time.Duration
-	}
-	Log struct {
-		LogLevel int
 	}
 }
 
