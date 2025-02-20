@@ -11,8 +11,7 @@ import (
 )
 
 // InitRateLimiter - initialize the rate limiter instance
-func InitRateLimiter(formattedRateLimit, trustedPlatform string) (*limiter.Limiter, error) {
-	cfg := config.GetConfig()
+func InitRateLimiter(cfg *config.Configuration, formattedRateLimit string, trustedPlatform string) (*limiter.Limiter, error) {
 
 	if formattedRateLimit == "" {
 		return nil, nil
@@ -33,14 +32,20 @@ func InitRateLimiter(formattedRateLimit, trustedPlatform string) (*limiter.Limit
 
 	if cfg.Database.REDIS.Activate {
 		// Create a store with the redis client.
+		if cfg.Database.REDIS.Client == nil {
+			log.Fatal("Redis client is not initialized")
+		}
+
 		store, err := sredis.NewStoreWithOptions(cfg.Database.REDIS.Client, limiter.StoreOptions{
 			Prefix:   "limiter",
 			MaxRetry: 3,
 		})
+
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
 		}
+
 		limiterInstance = limiter.New(
 			store,
 			rate,

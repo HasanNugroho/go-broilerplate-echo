@@ -6,72 +6,69 @@ import (
 
 	"github.com/HasanNugroho/starter-golang/bootstrap"
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/core/transport"
 	"github.com/HasanNugroho/starter-golang/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Initialize Gin router
-	r := gin.Default()
-
 	// Initialize configuration
-	err := config.InitConfig()
-	if err != nil {
-		log.Fatalf("Failed to initialize config: %v", err)
+	if err := config.InitConfig(); err != nil {
+		log.Fatalf("❌ Failed to initialize config: %v", err)
 	}
 
-	// Apply CORS middleware
-	r.Use(middleware.SetCORS())
-
-	// Get config
-	configPtr := config.GetConfig()
-	if configPtr == nil {
-		log.Fatal("Failed to get config: config is nil")
+	cfg := config.GetConfig()
+	if cfg == nil {
+		log.Fatal("❌ Failed to get config: config is nil")
 	}
-	config := *configPtr
 
-	// Set production mode
-	if config.AppEnv == "production" {
+	// Set production mode if applicable
+	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Initialize RDBMS
-	if config.Database.RDBMS.Activate {
-		db, err := bootstrap.InitDB()
-		if err != nil {
-			log.Fatalf("Failed to initialize database: %v", err)
-		}
+	// Initialize Gin router with middlewares
+	r := gin.Default()
+	r.Use(middleware.SetCORS(), middleware.SecurityMiddleware())
 
-		// Close database connection
-		defer bootstrap.ShutdownDB(db)
+	// Initialize RDBMS if enabled
+	if cfg.Database.RDBMS.Activate {
+		db, err := bootstrap.InitDB(&cfg.Database.RDBMS)
+		if err != nil {
+			log.Fatalf("❌ Failed to initialize database: %v", err)
+		}
+		defer bootstrap.ShutdownDB(db) // Ensure database is closed on exit
 	}
 
-	// Initialize REDIS client
-	if config.Database.REDIS.Activate {
-		redis, err := bootstrap.InitRedis()
-
+	// Initialize Redis if enabled
+	if cfg.Database.REDIS.Activate {
+		var err error
+		redisClient, err := bootstrap.InitRedis()
 		if err != nil {
-			log.Fatalf("Failed to initialize redis: %v", err)
+			log.Fatalf("❌ Failed to initialize Redis: %v", err)
 		}
-
-		// Close redis connection
-		defer bootstrap.ShutdownRedis(redis)
+		cfg.Database.REDIS.Client = redisClient
+		defer bootstrap.ShutdownRedis(redisClient)
 	}
 
-	// Initialize Rate Limit
-	if config.Security.RateLimit != "" {
-		limiter, err := bootstrap.InitRateLimiter(config.Security.RateLimit, config.Security.TrustedPlatform)
+	// Initialize Rate Limiter if enabled
+	if cfg.Security.RateLimit != "" {
+		limiter, err := bootstrap.InitRateLimiter(cfg, cfg.Security.RateLimit, cfg.Security.TrustedPlatform)
 		if err != nil {
-			log.Fatalf("Failed to initialize rate-limit: %v", err)
+			log.Fatalf("❌ Failed to initialize rate limiter: %v", err)
 		}
 		r.Use(middleware.RateLimit(limiter))
 	}
 
+	// Define test route
 	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+		c.JSON(http.StatusOK, gin.H{"message": "pong"})
 	})
 
-	log.Fatal(r.Run(config.Server.ServerHost + ":" + config.Server.ServerPort))
+	transport.RegisterRoutes(r, &transport.UserHandler{})
+
+	// Start server
+	serverAddr := cfg.Server.ServerHost + ":" + cfg.Server.ServerPort
+	log.Printf("🚀 Server running at %s", serverAddr)
+	log.Fatal(r.Run(serverAddr))
 }

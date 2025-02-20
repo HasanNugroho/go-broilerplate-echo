@@ -20,9 +20,7 @@ import (
 )
 
 // InitDB initializes the database connection
-func InitDB() (*gorm.DB, error) {
-	cfg := config.GetConfig().Database.RDBMS
-
+func InitDB(cfg *config.RDBMS) (*gorm.DB, error) {
 	logLevel := normalizeLogLevel(cfg.Env.LogLevel)
 
 	dsn, err := getDSN(cfg)
@@ -70,7 +68,7 @@ func normalizeLogLevel(logLevel int) int {
 }
 
 // getDSN builds the DSN string for MySQL or PostgreSQL
-func getDSN(cfg config.RDBMS) (string, error) {
+func getDSN(cfg *config.RDBMS) (string, error) {
 	switch cfg.Env.Driver {
 	case "mysql":
 		return buildMySQLDSN(cfg)
@@ -82,7 +80,7 @@ func getDSN(cfg config.RDBMS) (string, error) {
 }
 
 // buildMySQLDSN constructs MySQL DSN
-func buildMySQLDSN(cfg config.RDBMS) (string, error) {
+func buildMySQLDSN(cfg *config.RDBMS) (string, error) {
 	address := cfg.Env.Host
 	if cfg.Env.Port != "" {
 		address += ":" + cfg.Env.Port
@@ -111,7 +109,7 @@ func buildMySQLDSN(cfg config.RDBMS) (string, error) {
 }
 
 // buildPostgresDSN constructs PostgreSQL DSN
-func buildPostgresDSN(cfg config.RDBMS) string {
+func buildPostgresDSN(cfg *config.RDBMS) string {
 	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s TimeZone=%s sslmode=%s",
 		cfg.Env.Host, cfg.Access.User, cfg.Access.DbName, cfg.Access.Pass, cfg.Env.TimeZone, cfg.Ssl.Sslmode)
 

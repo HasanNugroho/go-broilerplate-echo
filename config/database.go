@@ -156,6 +156,7 @@ func loadRedisConfig() (databaseConfig DatabaseConfig, err error) {
 
 	databaseConfig.REDIS.Env.Host = utils.ToString(os.Getenv("REDISHOST"), "localhost")
 	databaseConfig.REDIS.Env.Port = utils.ToString(os.Getenv("REDISPORT"), "6379")
+	databaseConfig.REDIS.Env.Password = utils.ToString(os.Getenv("REDISPASSWORD"), "")
 	databaseConfig.REDIS.Conn.PoolSize = utils.ToInt(os.Getenv("POOLSIZE"), defaultPoolSize)
 	databaseConfig.REDIS.Conn.ConnTTL = utils.ToInt(os.Getenv("CONNTTL"), defaultConnTTL)
 
