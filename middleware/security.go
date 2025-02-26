@@ -8,9 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SecurityMiddleware() gin.HandlerFunc {
+func SecurityMiddleware(cfg *config.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cfg := config.GetConfig()
 		if c.Request.Host != cfg.Security.ExpectedHost {
 			utils.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
 			c.Abort()

@@ -6,9 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetCORS() gin.HandlerFunc {
-	cfg := config.GetConfig()
-
+func SetCORS(cfg *config.Configuration) gin.HandlerFunc {
 	allowOrigins := cfg.Server.AllowedOrigins
 	if len(allowOrigins) == 0 {
 		allowOrigins = []string{"*"}

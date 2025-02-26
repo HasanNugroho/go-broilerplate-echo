@@ -21,7 +21,7 @@ setup:
 
 # build dev container
 docker-run:
-	docker compose --env-file .env -f build/docker-compose.dev.yml up --build
+	docker compose --env-file .env -f ./docker-compose.dev.yml up --build -d
 
 # Shutdown dev container
 docker-down:

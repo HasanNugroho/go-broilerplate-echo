@@ -27,4 +27,6 @@ $ make watch
 $ make docker-run
 ```
 
-### Reference : https://github.com/pilinux/gorest
+### Reference : 
+- https://github.com/pilinux/gorest
+- https://github.com/khannedy/golang-clean-architecture/tree/main

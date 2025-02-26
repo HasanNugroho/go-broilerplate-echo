@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/HasanNugroho/starter-golang/config"
@@ -11,28 +12,16 @@ import (
 )
 
 // InitRedis initializes the Redis client
-func InitRedis() (*redis.Client, error) {
-	cfg := config.GetConfig() // Get global configuration
-	if cfg == nil {
-		return nil, fmt.Errorf("❌ Failed to load config: config is nil")
-	}
-
-	redisCfg := cfg.Database.REDIS
-
-	// Validate Redis configuration
-	if redisCfg.Env.Host == "" || redisCfg.Env.Port == "" {
-		return nil, fmt.Errorf("❌ Redis configuration is missing host or port")
-	}
-
+func InitRedis(cfg *config.RedisConfig) (*redis.Client, error) {
 	// Create Redis client
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", redisCfg.Env.Host, redisCfg.Env.Port),
-		Password: redisCfg.Env.Password,
-		PoolSize: redisCfg.Conn.PoolSize,
+		Addr:     fmt.Sprintf("%s:%s", cfg.Env.Host, strconv.Itoa(cfg.Env.Port)),
+		Password: cfg.Env.Password,
+		PoolSize: cfg.Conn.PoolSize,
 	})
 
 	// Set connection timeout
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(redisCfg.Conn.ConnTTL)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Conn.ConnTTL)*time.Second)
 	defer cancel()
 
 	// Test Redis connection
@@ -41,7 +30,7 @@ func InitRedis() (*redis.Client, error) {
 	}
 
 	// Assign Redis client to config
-	redisCfg.Client = redisClient
+	cfg.Client = redisClient
 	log.Println("✅ Redis connected successfully!")
 
 	return redisClient, nil

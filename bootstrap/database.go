@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/core/domain"
 	dmysql "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/mysql"
@@ -20,9 +20,7 @@ import (
 )
 
 // InitDB initializes the database connection
-func InitDB(cfg *config.RDBMS) (*gorm.DB, error) {
-	logLevel := normalizeLogLevel(cfg.Env.LogLevel)
-
+func InitDB(cfg *config.RDBMSConfig) (*gorm.DB, error) {
 	dsn, err := getDSN(cfg)
 	if err != nil {
 		return nil, err
@@ -36,9 +34,10 @@ func InitDB(cfg *config.RDBMS) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(cfg.Conn.MaxIdleConns)
 	sqlDB.SetMaxOpenConns(cfg.Conn.MaxOpenConns)
 	sqlDB.SetConnMaxLifetime(cfg.Conn.ConnMaxLifetime)
+	sqlDB.SetConnMaxIdleTime(cfg.Conn.ConnMaxIdleTime)
 
 	gormDB, err := gorm.Open(getGormDialector(cfg.Env.Driver, sqlDB), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.LogLevel(logLevel)),
+		Logger: logger.Default.LogMode(logger.LogLevel(cfg.Env.LogLevel)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("❌ error initializing %s with GORM: %w", cfg.Env.Driver, err)
@@ -46,29 +45,21 @@ func InitDB(cfg *config.RDBMS) (*gorm.DB, error) {
 
 	log.Println("✅ Database connection established successfully!")
 
-	if cfg.Env.Synchronize {
-		log.Println("Running AutoMigrate...")
-		if err := gormDB.AutoMigrate(&domain.User{}); err != nil {
-			return nil, fmt.Errorf("❌ migration failed: %w", err)
-		}
-		log.Println("✅ Successfully Migrated")
-	}
+	// if cfg.Env.Synchronize {
+	// 	log.Println("Running AutoMigrate...")
+	// 	if err := gormDB.AutoMigrate(&domain.User{}); err != nil {
+	// 		return nil, fmt.Errorf("❌ migration failed: %w", err)
+	// 	}
+	// 	log.Println("✅ Successfully Migrated")
+	// }
 
 	cfg.Client = gormDB
 
 	return gormDB, nil
 }
 
-// normalizeLogLevel ensures log level is within range
-func normalizeLogLevel(logLevel int) int {
-	if logLevel < 0 || logLevel > 4 {
-		return 1
-	}
-	return logLevel
-}
-
 // getDSN builds the DSN string for MySQL or PostgreSQL
-func getDSN(cfg *config.RDBMS) (string, error) {
+func getDSN(cfg *config.RDBMSConfig) (string, error) {
 	switch cfg.Env.Driver {
 	case "mysql":
 		return buildMySQLDSN(cfg)
@@ -80,26 +71,22 @@ func getDSN(cfg *config.RDBMS) (string, error) {
 }
 
 // buildMySQLDSN constructs MySQL DSN
-func buildMySQLDSN(cfg *config.RDBMS) (string, error) {
+func buildMySQLDSN(cfg *config.RDBMSConfig) (string, error) {
 	address := cfg.Env.Host
-	if cfg.Env.Port != "" {
-		address += ":" + cfg.Env.Port
+	if strconv.Itoa(cfg.Env.Port) != "" {
+		address += ":" + strconv.Itoa(cfg.Env.Port)
 	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		cfg.Access.User, cfg.Access.Pass, address, cfg.Access.DbName)
 
-	if cfg.Ssl.Sslmode == "" {
-		cfg.Ssl.Sslmode = "disable"
-	}
-
-	if cfg.Ssl.Sslmode != "disable" {
-		switch cfg.Ssl.Sslmode {
+	if cfg.Ssl.Mode != "disable" {
+		switch cfg.Ssl.Mode {
 		case "require":
 			dsn += "&tls=true"
 		case "verify-ca", "verify-full":
 			dsn += "&tls=custom"
-			if err := InitTLSMySQL(); err != nil {
+			if err := InitTLSMySQL(cfg); err != nil {
 				return "", fmt.Errorf("❌ failed to initialize TLS for MySQL: %w", err)
 			}
 		}
@@ -109,9 +96,9 @@ func buildMySQLDSN(cfg *config.RDBMS) (string, error) {
 }
 
 // buildPostgresDSN constructs PostgreSQL DSN
-func buildPostgresDSN(cfg *config.RDBMS) string {
+func buildPostgresDSN(cfg *config.RDBMSConfig) string {
 	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s TimeZone=%s sslmode=%s",
-		cfg.Env.Host, cfg.Access.User, cfg.Access.DbName, cfg.Access.Pass, cfg.Env.TimeZone, cfg.Ssl.Sslmode)
+		cfg.Env.Host, cfg.Access.User, cfg.Access.DbName, cfg.Access.Pass, cfg.Env.TimeZone, cfg.Ssl.Mode)
 
 	if cfg.Ssl.RootCA != "" {
 		dsn += fmt.Sprintf(" sslrootcert=%s", cfg.Ssl.RootCA)
@@ -229,13 +216,12 @@ func ShutdownDB(db *gorm.DB) {
 // 7.5 convert PKCS#8 format key into PKCS#1 format
 //
 // `openssl rsa -in client-key.pem -out client-key.pem`
-func InitTLSMySQL() (err error) {
-	configureDB := config.GetConfig().Database.RDBMS
-	minTLS := configureDB.Ssl.MinTLS
-	rootCA := configureDB.Ssl.RootCA
-	serverCert := configureDB.Ssl.ServerCert
-	clientCert := configureDB.Ssl.ClientCert
-	clientKey := configureDB.Ssl.ClientKey
+func InitTLSMySQL(cfg *config.RDBMSConfig) (err error) {
+	minTLS := cfg.Ssl.MinTLS
+	rootCA := cfg.Ssl.RootCA
+	serverCert := cfg.Ssl.ServerCert
+	clientCert := cfg.Ssl.ClientCert
+	clientKey := cfg.Ssl.ClientKey
 
 	rootCertPool := x509.NewCertPool()
 	var pem []byte
