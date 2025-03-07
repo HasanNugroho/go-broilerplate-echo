@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	"github.com/HasanNugroho/starter-golang/config"
-	dmysql "github.com/go-sql-driver/mysql"
+	driver_mysql "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -42,8 +42,6 @@ func InitDB(cfg *config.RDBMSConfig) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("❌ error initializing %s with GORM: %w", cfg.Env.Driver, err)
 	}
-
-	log.Println("✅ Database connection established successfully!")
 
 	// if cfg.Env.Synchronize {
 	// 	log.Println("Running AutoMigrate...")
@@ -275,7 +273,7 @@ func InitTLSMySQL(cfg *config.RDBMSConfig) (err error) {
 		tlsConfig.Certificates = clientCertificate
 	}
 
-	err = dmysql.RegisterTLSConfig("custom", &tlsConfig)
+	err = driver_mysql.RegisterTLSConfig("custom", &tlsConfig)
 
 	return
 }

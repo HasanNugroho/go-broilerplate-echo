@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/bootstrap"
 	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -18,13 +18,16 @@ func main() {
 	// Initialize configuration
 	config, err := config.InitConfig()
 	if err != nil {
-		log.Fatalf("❌ Failed to initialize config: %v", err)
+		log.Fatal().Msg("❌ Failed to initialize config: " + err.Error())
 	}
 
 	// Set production mode if applicable
 	if config.AppEnv == ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	// Initialize Logger
+	bootstrap.InitLogger(config)
 
 	// Initialize Gin router with middlewares
 	r := gin.Default()
@@ -34,7 +37,7 @@ func main() {
 	if config.Database.RDBMS.Enabled {
 		db, err := bootstrap.InitDB(&config.Database.RDBMS)
 		if err != nil {
-			log.Fatal(err)
+			bootstrap.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
 		defer bootstrap.ShutdownDB(db) // Ensure database is closed on exit
@@ -45,7 +48,7 @@ func main() {
 		var err error
 		redisClient, err := bootstrap.InitRedis(&config.Database.Redis)
 		if err != nil {
-			log.Fatal(err)
+			bootstrap.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
 		// config.Database.Redis.Client = redisClient
@@ -56,7 +59,7 @@ func main() {
 	if config.Security.RateLimit != "" {
 		limiter, err := bootstrap.InitRateLimiter(config, config.Security.RateLimit, config.Security.TrustedPlatform)
 		if err != nil {
-			log.Fatal(err)
+			bootstrap.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
 		r.Use(middleware.RateLimit(limiter))
@@ -69,6 +72,9 @@ func main() {
 
 	// Start server
 	serverAddr := config.Server.ServerHost + ":" + config.Server.ServerPort
-	log.Printf("🚀 Server running at %s", serverAddr)
-	log.Fatal(r.Run(serverAddr))
+	// bootstrap.Logger.Info().Msg("🚀 Server running at " + serverAddr)
+	err = r.Run(serverAddr)
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 }

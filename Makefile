@@ -1,3 +1,5 @@
+include .env
+
 # Build the application
 all: build test
 
@@ -26,3 +28,14 @@ docker-run:
 # Shutdown dev container
 docker-down:
 	docker compose down
+
+create_migration:
+	migrate create -ext=sql -dir=internal/database/migrations -seq init
+
+migrate_up:
+	migrate -path=internal/database/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
+
+migrate_down:
+	migrate -path=internal/database/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
+
+.PHONY: create_migration migrate_up migrate_down

@@ -14,6 +14,7 @@ type Configuration struct {
 	Server   ServerConfig
 	Security SecurityConfig
 	AppEnv   string
+	Logger   LoggerConfig
 }
 
 var generalConfig *Configuration
@@ -38,6 +39,7 @@ func InitConfig() (generalConfig *Configuration, err error) {
 		Server:   LoadServerConfig(),
 		Database: loadDatabaseConfig(),
 		Security: LoadSecurityConfig(),
+		Logger:   LoadLoggerConfig(),
 	}
 
 	generalConfig = &config
