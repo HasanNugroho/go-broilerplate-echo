@@ -1,11 +1,11 @@
 package main
 
 import (
+	"net"
 	"net/http"
 
-	"github.com/HasanNugroho/starter-golang/bootstrap"
-	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/middleware"
+	config "github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -16,50 +16,50 @@ const (
 
 func main() {
 	// Initialize configuration
-	config, err := config.InitConfig()
+	cfg, err := config.InitConfig()
 	if err != nil {
 		log.Fatal().Msg("❌ Failed to initialize config: " + err.Error())
 	}
 
 	// Set production mode if applicable
-	if config.AppEnv == ProductionEnv {
+	if cfg.AppEnv == ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// Initialize Logger
-	bootstrap.InitLogger(config)
+	config.InitLogger(cfg)
 
 	// Initialize Gin router with middlewares
 	r := gin.Default()
-	r.Use(middleware.SetCORS(config), middleware.SecurityMiddleware(config))
+	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
 
 	// Initialize RDBMS if enabled
-	if config.Database.RDBMS.Enabled {
-		db, err := bootstrap.InitDB(&config.Database.RDBMS)
+	if cfg.Database.Enabled {
+		db, err := config.InitDB(&cfg.Database)
 		if err != nil {
-			bootstrap.Logger.Fatal().Msg(err.Error())
+			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
-		defer bootstrap.ShutdownDB(db) // Ensure database is closed on exit
+		defer config.ShutdownDB(db) // Ensure database is closed on exit
 	}
 
 	// Initialize Redis if enabled
-	if config.Database.Redis.Enabled {
+	if cfg.Database.Enabled {
 		var err error
-		redisClient, err := bootstrap.InitRedis(&config.Database.Redis)
+		redisClient, err := config.InitRedis(&cfg.Redis)
 		if err != nil {
-			bootstrap.Logger.Fatal().Msg(err.Error())
+			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
 		// config.Database.Redis.Client = redisClient
-		defer bootstrap.ShutdownRedis(redisClient)
+		defer config.ShutdownRedis(redisClient)
 	}
 
 	// Initialize Rate Limiter if enabled
-	if config.Security.RateLimit != "" {
-		limiter, err := bootstrap.InitRateLimiter(config, config.Security.RateLimit, config.Security.TrustedPlatform)
+	if cfg.Security.RateLimit != "" {
+		limiter, err := config.InitRateLimiter(cfg, cfg.Security.RateLimit, cfg.Security.TrustedPlatform)
 		if err != nil {
-			bootstrap.Logger.Fatal().Msg(err.Error())
+			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
 		r.Use(middleware.RateLimit(limiter))
@@ -71,8 +71,8 @@ func main() {
 	})
 
 	// Start server
-	serverAddr := config.Server.ServerHost + ":" + config.Server.ServerPort
-	// bootstrap.Logger.Info().Msg("🚀 Server running at " + serverAddr)
+	serverAddr := net.JoinHostPort(cfg.Server.ServerHost, cfg.Server.ServerPort)
+	// config.Logger.Info().Msg("🚀 Server running at " + serverAddr)
 	err = r.Run(serverAddr)
 	if err != nil {
 		log.Fatal().Msg(err.Error())

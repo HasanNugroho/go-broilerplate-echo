@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	config "github.com/HasanNugroho/starter-golang/internal/configs"
 	"github.com/stretchr/testify/assert"
 )
 

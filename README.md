@@ -30,3 +30,4 @@ $ make docker-run
 ### Reference : 
 - https://github.com/pilinux/gorest
 - https://github.com/khannedy/golang-clean-architecture/tree/main
+- https://gist.github.com/ayoubzulfiqar/9f1a34049332711fddd4d4b2bfd46096

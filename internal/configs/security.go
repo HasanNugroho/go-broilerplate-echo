@@ -1,9 +1,9 @@
-package config
+package configs
 
 import (
 	"os"
 
-	utils "github.com/HasanNugroho/starter-golang/pkg/utlis"
+	"github.com/HasanNugroho/starter-golang/pkg/utils"
 	"github.com/ulule/limiter/v3"
 )
 

@@ -3,15 +3,15 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/HasanNugroho/starter-golang/config"
-	utils "github.com/HasanNugroho/starter-golang/pkg/utlis"
+	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/pkg/model"
 	"github.com/gin-gonic/gin"
 )
 
-func SecurityMiddleware(cfg *config.Configuration) gin.HandlerFunc {
+func SecurityMiddleware(cfg *configs.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Host != cfg.Security.ExpectedHost {
-			utils.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
+			model.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
 			c.Abort()
 			return
 		}

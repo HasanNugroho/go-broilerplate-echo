@@ -1,16 +1,17 @@
-package config
+package configs
 
 import (
 	"os"
 	"strings"
 
-	utils "github.com/HasanNugroho/starter-golang/pkg/utlis"
+	"github.com/HasanNugroho/starter-golang/pkg/utils"
 	"github.com/joho/godotenv"
 )
 
 type Configuration struct {
 	Version  string
-	Database DatabaseConfig
+	Database RDBMSConfig
+	Redis    RedisConfig
 	Server   ServerConfig
 	Security SecurityConfig
 	AppEnv   string
@@ -37,7 +38,8 @@ func InitConfig() (generalConfig *Configuration, err error) {
 		Version:  utils.ToString(os.Getenv("VERSION"), "1.0.0"),
 		AppEnv:   strings.ToLower(utils.ToString(os.Getenv("APP_ENV"), "development")),
 		Server:   LoadServerConfig(),
-		Database: loadDatabaseConfig(),
+		Database: loadRDBMSConfig(),
+		Redis:    loadRedisConfig(),
 		Security: LoadSecurityConfig(),
 		Logger:   LoadLoggerConfig(),
 	}

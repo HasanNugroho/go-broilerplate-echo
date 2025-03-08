@@ -1,4 +1,4 @@
-package bootstrap
+package configs
 
 import (
 	"fmt"
@@ -7,14 +7,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/pkg/hook"
+	"github.com/HasanNugroho/starter-golang/pkg/utils"
 	"github.com/rs/zerolog"
 )
 
+// LoggerConfig ...
+type LoggerConfig struct {
+	LogLevel string
+	Log      *zerolog.Logger
+}
+
 var Logger zerolog.Logger
 
-func InitLogger(cfg *config.Configuration) {
+func LoadLoggerConfig() (loggerConfig LoggerConfig) {
+	loggerConfig.LogLevel = utils.ToString(os.Getenv("LOG_LEVEL"), "error")
+	return
+}
+
+func InitLogger(cfg *Configuration) {
 	// Parse log level
 	level, err := zerolog.ParseLevel(cfg.Logger.LogLevel)
 	if err != nil {
@@ -41,10 +52,18 @@ func InitLogger(cfg *config.Configuration) {
 	}
 
 	// Initialize and assign the global logger
-	Logger = zerolog.New(output).
+	loggerBuilder := zerolog.New(output).
 		Level(level).
 		With().
 		Timestamp().
-		Logger().
-		Hook(&hook.LoggerHook{})
+		Logger()
+
+		// Apply hook **only in production mode**
+	if cfg.AppEnv == "production" {
+		loggerBuilder = loggerBuilder.Hook(&hook.LoggerHook{})
+		fmt.Println("✅ Logger hook enabled in production mode")
+	}
+
+	// Assign the global logger
+	Logger = loggerBuilder
 }
