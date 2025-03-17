@@ -6,7 +6,7 @@ import (
 
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-	sredis "github.com/ulule/limiter/v3/drivers/store/redis"
+	redis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
 // InitRateLimiter - initialize the rate limiter instance
@@ -29,7 +29,7 @@ func InitRateLimiter(cfg *Configuration, formattedRateLimit string, trustedPlatf
 			log.Fatal("Redis client is not initialized")
 		}
 
-		store, err := sredis.NewStoreWithOptions(cfg.Redis.Client, limiter.StoreOptions{
+		store, err := redis.NewStoreWithOptions(cfg.Redis.Client, limiter.StoreOptions{
 			Prefix:   "limiter",
 			MaxRetry: 3,
 		})

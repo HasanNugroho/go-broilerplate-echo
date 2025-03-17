@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -25,7 +25,7 @@ type RedisConfig struct {
 // LoadRedisConfig loads Redis configuration
 func loadRedisConfig() (redisConfig RedisConfig) {
 	redisConfig = RedisConfig{
-		Enabled:  utils.ToBool(os.Getenv("ACTIVATE_RDBMS"), false),
+		Enabled:  utils.ToBool(os.Getenv("ACTIVATE_REDIS"), false),
 		Host:     utils.ToString(os.Getenv("REDISHOST"), "localhost"),
 		Port:     utils.ToInt(os.Getenv("REDISPORT"), 6379),
 		Password: utils.ToString(os.Getenv("REDISPASSWORD"), ""),

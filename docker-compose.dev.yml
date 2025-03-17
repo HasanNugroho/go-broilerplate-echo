@@ -1,19 +1,21 @@
-version: "1.0"
+version: "${VERSION}"
 
 services:
-  # app:
-  #   build: 
-  #     context: ../
-  #     dockerfile: Dockerfile
-  #   container_name: app
-  #   ports:
-  #     - "${APP_PORT}:${APP_PORT}"
-  #   depends_on:
-  #     - psql_bp
-  #     - redis
-  #   restart: always 
-  #   networks:
-  #     - backend
+  app:
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    container_name: app
+    env_file:
+      - ./.env
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    depends_on:
+      - psql_bp
+      - redis
+    restart: always 
+    networks:
+      - backend
 
   psql_bp:
     image: postgres:latest
@@ -30,14 +32,14 @@ services:
     networks:
       - backend
 
-#   redis:
-#     image: redis:latest
-#     container_name: redis_cache
-#     restart: unless-stopped
-#     ports:
-#       - "${REDISPORT}:6379"
-#     networks:
-#       - backend
+  redis:
+    image: redis:latest
+    container_name: redis_cache
+    restart: unless-stopped
+    ports:
+      - "${REDISPORT}:6379"
+    networks:
+      - backend
 
 volumes:
   psql_volume_bp:

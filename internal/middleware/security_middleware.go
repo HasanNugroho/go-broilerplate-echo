@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/internal/configs"
-	"github.com/HasanNugroho/starter-golang/pkg/model"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/model"
 	"github.com/gin-gonic/gin"
 )
 

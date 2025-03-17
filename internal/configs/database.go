@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
 	driver_mysql "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"

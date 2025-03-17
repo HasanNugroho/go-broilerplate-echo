@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/pkg/hook"
-	"github.com/HasanNugroho/starter-golang/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/hook"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
 	"github.com/rs/zerolog"
 )
 

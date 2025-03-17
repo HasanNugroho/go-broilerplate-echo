@@ -11,7 +11,7 @@ build:
 
 # Run the application
 run:
-	@go run cmd/main.go
+	@go run cmd/api/main.go
 
 # watch the application (dev only)
 watch:
@@ -23,14 +23,15 @@ setup:
 
 # build dev container
 docker-run:
-	docker compose --env-file .env -f ./docker-compose.dev.yml up --build -d
+	docker compose --env-file ./.env -f ./docker-compose.dev.yml config
+	docker compose --env-file ./.env -f ./docker-compose.dev.yml up --build -d
 
 # Shutdown dev container
 docker-down:
-	docker compose down
+	@docker compose -f ./docker-compose.dev.yml down --rmi all
 
 create_migration:
-	migrate create -ext=sql -dir=internal/database/migrations -seq init
+	migrate create -ext=sql -dir=internal/database/migrations -seq $(desc)
 
 migrate_up:
 	migrate -path=internal/database/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up

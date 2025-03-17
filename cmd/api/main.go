@@ -4,10 +4,13 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	config "github.com/HasanNugroho/starter-golang/internal/configs"
 	"github.com/HasanNugroho/starter-golang/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 const (
@@ -29,10 +32,6 @@ func main() {
 	// Initialize Logger
 	config.InitLogger(cfg)
 
-	// Initialize Gin router with middlewares
-	r := gin.Default()
-	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
-
 	// Initialize RDBMS if enabled
 	if cfg.Database.Enabled {
 		db, err := config.InitDB(&cfg.Database)
@@ -44,7 +43,7 @@ func main() {
 	}
 
 	// Initialize Redis if enabled
-	if cfg.Database.Enabled {
+	if cfg.Redis.Enabled {
 		var err error
 		redisClient, err := config.InitRedis(&cfg.Redis)
 		if err != nil {
@@ -54,6 +53,20 @@ func main() {
 		// config.Database.Redis.Client = redisClient
 		defer config.ShutdownRedis(redisClient)
 	}
+
+	// Initialize Gin router with middlewares
+	r := gin.Default()
+	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
+
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	// v1 := r.Group("/api/v1")
+	// {
+	// 	eg := v1.Group("/example")
+	// 	{
+	// 		eg.GET("/helloworld", Helloworld)
+	// 	}
+	// }
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Initialize Rate Limiter if enabled
 	if cfg.Security.RateLimit != "" {

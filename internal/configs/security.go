@@ -3,7 +3,7 @@ package configs
 import (
 	"os"
 
-	"github.com/HasanNugroho/starter-golang/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
 	"github.com/ulule/limiter/v3"
 )
 

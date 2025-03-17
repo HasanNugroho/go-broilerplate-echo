@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/HasanNugroho/starter-golang/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
 	"github.com/joho/godotenv"
 )
 
