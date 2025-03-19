@@ -31,12 +31,12 @@ docker-down:
 	@docker compose -f ./docker-compose.dev.yml down --rmi all
 
 create_migration:
-	migrate create -ext=sql -dir=internal/database/migrations -seq $(desc)
+	migrate create -ext=sql -dir=migrations -seq $(desc)
 
 migrate_up:
-	migrate -path=internal/database/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
+	migrate -path=migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
 
 migrate_down:
-	migrate -path=internal/database/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
+	migrate -path=migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
 
 .PHONY: create_migration migrate_up migrate_down

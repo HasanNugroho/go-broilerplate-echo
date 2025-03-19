@@ -22,8 +22,8 @@ var generalConfig *Configuration
 
 // Load environment variables
 func InitEnv() error {
-	if os.Getenv("APP_ENV") != "production" {
-		return godotenv.Load()
+	if env := godotenv.Load(); env == nil {
+		return env
 	}
 	return nil
 }

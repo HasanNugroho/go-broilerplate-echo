@@ -59,13 +59,7 @@ func main() {
 	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	// v1 := r.Group("/api/v1")
-	// {
-	// 	eg := v1.Group("/example")
-	// 	{
-	// 		eg.GET("/helloworld", Helloworld)
-	// 	}
-	// }
+
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Initialize Rate Limiter if enabled
