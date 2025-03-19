@@ -20,6 +20,8 @@ type SecurityConfig struct {
 	ReferrerPolicy    string
 	XContentTypeOpts  string
 	PermissionsPolicy string
+	JWT_SECRET_KEY    string
+	JWT_EXPIRED       int
 }
 
 func LoadSecurityConfig() (securityConfig SecurityConfig) {
@@ -35,5 +37,7 @@ func LoadSecurityConfig() (securityConfig SecurityConfig) {
 		ReferrerPolicy:    utils.ToString(os.Getenv("REFERRER_POLICY"), "strict-origin"),
 		XContentTypeOpts:  utils.ToString(os.Getenv("X_CONTENT_TYPE_OPTIONS"), "nosniff"),
 		PermissionsPolicy: utils.ToString(os.Getenv("PERMISSIONS_POLICY"), ""),
+		JWT_SECRET_KEY:    utils.ToString(os.Getenv("JWT_SECRET_KEY"), ""),
+		JWT_EXPIRED:       utils.ToInt(os.Getenv("JWT_EXPIRED"), 1),
 	}
 }

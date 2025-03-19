@@ -18,7 +18,7 @@ type Configuration struct {
 	Logger   LoggerConfig
 }
 
-var generalConfig *Configuration
+var GeneralConfig *Configuration
 
 // Load environment variables
 func InitEnv() error {
@@ -29,7 +29,7 @@ func InitEnv() error {
 }
 
 // InitConfig initializes the application configuration
-func InitConfig() (generalConfig *Configuration, err error) {
+func InitConfig() (GeneralConfig *Configuration, err error) {
 	if err := InitEnv(); err != nil {
 		return nil, err
 	}
@@ -44,14 +44,14 @@ func InitConfig() (generalConfig *Configuration, err error) {
 		Logger:   LoadLoggerConfig(),
 	}
 
-	generalConfig = &config
-	return generalConfig, nil
+	GeneralConfig = &config
+	return GeneralConfig, nil
 }
 
 // GetConfig - return all the config variables
 func GetConfig() (cfg *Configuration, err error) {
-	if generalConfig != nil {
-		return generalConfig, nil
+	if GeneralConfig != nil {
+		return GeneralConfig, nil
 	}
 
 	cfg, err = InitConfig()

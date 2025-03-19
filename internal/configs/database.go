@@ -3,6 +3,7 @@ package configs
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net"
@@ -78,6 +79,11 @@ func loadRDBMSConfig() (dbConfig RDBMSConfig) {
 	return
 }
 
+const (
+	maxRetries = 5
+	retryDelay = 3 * time.Second
+)
+
 // InitDB initializes the database connection
 func InitDB(cfg *RDBMSConfig) (*gorm.DB, error) {
 	// Get GORM dialect based on the database driver
@@ -86,16 +92,30 @@ func InitDB(cfg *RDBMSConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("❌ failed to get dialect for %s: %w", cfg.Driver, err)
 	}
 
-	// Open database connection
-	db, err := gorm.Open(dialect, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.LogLevel(cfg.LogLevel)),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("❌ error initializing %s with GORM: %w", cfg.Driver, err)
+	var sqlDB *sql.DB
+	var db *gorm.DB
+	for i := 1; i <= maxRetries; i++ {
+		// Open database connection
+		db, err = gorm.Open(dialect, &gorm.Config{
+			Logger: logger.Default.LogMode(logger.LogLevel(cfg.LogLevel)),
+		})
+
+		if err == nil {
+			Logger.Info().Msgf("✅ Database %s connected successfully!", cfg.Driver)
+			break
+		}
+
+		Logger.Error().Msgf("❌ Database connection failed: %v", err)
+		if i < maxRetries {
+			Logger.Error().Msgf("🔄 Retrying in %v seconds... (%d/%d)", retryDelay.Seconds(), i, maxRetries)
+			time.Sleep(retryDelay)
+		} else {
+			return nil, fmt.Errorf("❌ Failed to connect after %d attempts: %v", maxRetries, err)
+		}
 	}
 
 	// Retrieve the underlying SQL DB connection
-	sqlDB, err := db.DB()
+	sqlDB, err = db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("❌ error retrieving SQL DB from GORM: %w", err)
 	}
@@ -105,7 +125,6 @@ func InitDB(cfg *RDBMSConfig) (*gorm.DB, error) {
 	sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
 	cfg.Client = db
-	Logger.Info().Msgf("✅ Database %s connected successfully!", cfg.Driver)
 
 	return db, nil
 }

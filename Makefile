@@ -21,6 +21,15 @@ setup:
 	go mod download
 	cp .env.example .env
 
+# setup database
+setup-db:
+	docker compose --env-file ./.env -f ./docker-compose.db.yml config
+	docker compose --env-file ./.env -f ./docker-compose.db.yml up --build -d
+
+# Shutdown db container
+setup-db-down:
+	@docker compose -f ./docker-compose.db.yml down --rmi all
+
 # build dev container
 docker-run:
 	docker compose --env-file ./.env -f ./docker-compose.dev.yml config
