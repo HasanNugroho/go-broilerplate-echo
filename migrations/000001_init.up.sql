@@ -1,4 +1,4 @@
-drop table users;
+DROP TABLE users;
 
 CREATE TABLE "users" (
     "id" UUID PRIMARY KEY,
