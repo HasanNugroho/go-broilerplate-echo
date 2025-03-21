@@ -2,7 +2,6 @@ package main
 
 import (
 	"net"
-	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	config "github.com/HasanNugroho/starter-golang/internal/configs"
@@ -54,8 +53,7 @@ func main() {
 		defer config.ShutdownRedis(redisClient)
 	}
 
-	// Initialize Gin router with middlewares
-	r := gin.Default()
+	r := config.NewGin(cfg)
 	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
 
 	docs.SwaggerInfo.BasePath = "/api/v1"
@@ -72,16 +70,15 @@ func main() {
 		r.Use(middleware.RateLimit(limiter))
 	}
 
-	// Define test route
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
-	})
+	route, _ := InitializeApp(r, &cfg.Database)
+	route.SetupRoutes()
 
 	// Start server
 	serverAddr := net.JoinHostPort(cfg.Server.ServerHost, cfg.Server.ServerPort)
 	// config.Logger.Info().Msg("🚀 Server running at " + serverAddr)
 	err = r.Run(serverAddr)
 	if err != nil {
-		log.Fatal().Msg(err.Error())
+		config.Logger.Fatal().Msg(err.Error())
 	}
+
 }

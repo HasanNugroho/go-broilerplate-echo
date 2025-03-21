@@ -7,7 +7,7 @@ all: build test
 build:
 	@echo "Building..."
 	
-	@go build -o main cmd/main.go
+	@go build -o main cmd/api/main.go
 
 # Run the application
 run:
@@ -20,6 +20,9 @@ watch:
 setup:
 	go mod download
 	cp .env.example .env
+
+gen-di:
+	wire gen ./cmd/api
 
 # setup database
 setup-db:
@@ -40,12 +43,12 @@ docker-down:
 	@docker compose -f ./docker-compose.dev.yml down --rmi all
 
 create_migration:
-	migrate create -ext=sql -dir=migrations -seq $(desc)
+	migrate create -ext=sql -dir=db/migrations -seq $(desc)
 
 migrate_up:
-	migrate -path=migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
+	migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
 
 migrate_down:
-	migrate -path=migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
+	migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
 
 .PHONY: create_migration migrate_up migrate_down

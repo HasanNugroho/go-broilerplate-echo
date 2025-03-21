@@ -20,6 +20,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+var DBClient *gorm.DB
+
 // RDBMS - relational database variables
 type RDBMSConfig struct {
 	Enabled         bool

@@ -29,12 +29,12 @@ func InitEnv() error {
 }
 
 // InitConfig initializes the application configuration
-func InitConfig() (GeneralConfig *Configuration, err error) {
+func InitConfig() (*Configuration, error) {
 	if err := InitEnv(); err != nil {
 		return nil, err
 	}
 
-	config := Configuration{
+	config := &Configuration{
 		Version:  utils.ToString(os.Getenv("VERSION"), "1.0.0"),
 		AppEnv:   strings.ToLower(utils.ToString(os.Getenv("APP_ENV"), "development")),
 		Server:   LoadServerConfig(),
@@ -44,7 +44,7 @@ func InitConfig() (GeneralConfig *Configuration, err error) {
 		Logger:   LoadLoggerConfig(),
 	}
 
-	GeneralConfig = &config
+	GeneralConfig = config
 	return GeneralConfig, nil
 }
 

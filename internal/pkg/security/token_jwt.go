@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(configs.GeneralConfig.Security.JWT_SECRET_KEY)
+// var secretKey = []byte(configs.GeneralConfig.Security.JWT_SECRET_KEY)
 
 // Function to create JWT tokens with claims
 func CreateToken(data interface{}) (string, error) {
@@ -21,7 +21,7 @@ func CreateToken(data interface{}) (string, error) {
 
 	fmt.Printf("Token claims added: %+v\n", claims)
 
-	tokenString, err := claims.SignedString(secretKey)
+	tokenString, err := claims.SignedString("secretKey")
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func CreateToken(data interface{}) (string, error) {
 func VerifyToken(tokenString string) (*jwt.Token, error) {
 	// Parse the token with the secret key
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return "secretKey", nil
 	})
 
 	// Check for verification errors
