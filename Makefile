@@ -1,54 +1,91 @@
+# Load environment variables
 include .env
 
-# Build the application
+# Default target
+.PHONY: all build run watch setup setup-db setup-db-down docker-run docker-down \
+        gen-di gen-docs create-migration migrate-up migrate-down clean
+
 all: build test
 
-# build the application
+## ---------------- Build & Run ----------------
+
+# Build the application
 build:
-	@echo "Building..."
-	
+	@echo "🔨 Building application..."
 	@go build -o main cmd/api/main.go
 
 # Run the application
 run:
-	@go run cmd/api/main.go
+	@echo "🚀 Running application..."
+	@go run ./cmd/api
 
-# watch the application (dev only)
+# Watch for changes (dev only)
 watch:
+	@echo "👀 Watching for changes..."
 	@air -c .air.toml
 
+## ---------------- Setup ----------------
+
+# Install dependencies & setup environment
 setup:
-	go mod download
-	cp .env.example .env
+	@echo "📦 Setting up project..."
+	@go mod download
+	@cp .env.example .env || true
 
+# Generate dependency injection
 gen-di:
-	wire gen ./cmd/api
+	@echo "⚙️ Generating DI..."
+	@wire gen ./cmd/api
 
-# setup database
+# Generate Swagger API docs
+gen-docs:
+	@echo "📖 Generating API documentation..."
+	@swag init -g cmd/api/main.go
+
+## ---------------- Database ----------------
+
+# Setup & start database container
 setup-db:
-	docker compose --env-file ./.env -f ./docker-compose.db.yml config
-	docker compose --env-file ./.env -f ./docker-compose.db.yml up --build -d
+	@echo "🐘 Starting database container..."
+	@docker compose --env-file ./.env -f ./docker-compose.db.yml up --build -d
 
-# Shutdown db container
+# Shutdown database container
 setup-db-down:
+	@echo "🛑 Stopping database container..."
 	@docker compose -f ./docker-compose.db.yml down --rmi all
 
-# build dev container
-docker-run:
-	docker compose --env-file ./.env -f ./docker-compose.dev.yml config
-	docker compose --env-file ./.env -f ./docker-compose.dev.yml up --build -d
+## ---------------- Docker ----------------
 
-# Shutdown dev container
+# Run development container
+docker-run:
+	@echo "🐳 Running dev container..."
+	@docker compose --env-file ./.env -f ./docker-compose.dev.yml up --build -d
+
+# Shutdown development container
 docker-down:
+	@echo "🛑 Stopping dev container..."
 	@docker compose -f ./docker-compose.dev.yml down --rmi all
 
-create_migration:
-	migrate create -ext=sql -dir=db/migrations -seq $(desc)
+## ---------------- Migrations ----------------
 
-migrate_up:
-	migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
+# Create new migration file
+create-migration:
+	@echo "📜 Creating migration: $(desc)..."
+	@migrate create -ext=sql -dir=db/migrations -seq $(desc)
 
-migrate_down:
-	migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
+# Apply database migrations
+migrate-up:
+	@echo "⬆️ Running migrations..."
+	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
 
-.PHONY: create_migration migrate_up migrate_down
+# Rollback database migrations
+migrate-down:
+	@echo "⬇️ Rolling back migrations..."
+	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
+
+## ---------------- Utilities ----------------
+
+# Clean up generated files
+clean:
+	@echo "🧹 Cleaning up..."
+	@rm -rf main docs

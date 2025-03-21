@@ -31,7 +31,7 @@ func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateUpdateModel
 		Name:     user.Name,
 		Password: password,
 	}
-	return u.repo.Create(&payload, ctx)
+	return u.repo.Create(ctx, &payload)
 }
 
 func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, error) {
@@ -39,9 +39,23 @@ func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, er
 	panic("not implemented")
 }
 
-func (u *UserService) FindAll(ctx *gin.Context, search interface{}) ([]model.UserModel, error) {
-	// Implementasi yang sesuai
-	panic("not implemented")
+func (u *UserService) FindAll(ctx *gin.Context) ([]model.UserModel, error) {
+	users, err := u.repo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert entity.User ke model.UserModel
+	var userModels []model.UserModel
+	for _, user := range users {
+		userModels = append(userModels, model.UserModel{
+			ID:    user.ID,
+			Email: user.Email,
+			Name:  user.Name,
+		})
+	}
+
+	return userModels, nil
 }
 
 func (u *UserService) Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error {

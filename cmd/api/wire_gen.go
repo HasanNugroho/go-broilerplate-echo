@@ -7,8 +7,8 @@
 package main
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal"
 	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/internal/routes"
 	"github.com/HasanNugroho/starter-golang/internal/users"
 	"github.com/HasanNugroho/starter-golang/internal/users/repository"
 	"github.com/gin-gonic/gin"
@@ -17,11 +17,11 @@ import (
 
 // Injectors from injection.go:
 
-func InitializeApp(r *gin.Engine, cfg *configs.RDBMSConfig) (*internal.RouteConfig, error) {
+func InitializeRoute(r *gin.Engine, cfg *configs.RDBMSConfig) (*routes.RouteConfig, error) {
 	userRepository := repository.NewUserRepository(cfg)
 	userService := users.NewUserService(userRepository)
 	userHandler := users.NewUserHandler(userService)
-	routeConfig := internal.NewRouter(r, userHandler)
+	routeConfig := routes.NewRouter(r, userHandler)
 	return routeConfig, nil
 }
 

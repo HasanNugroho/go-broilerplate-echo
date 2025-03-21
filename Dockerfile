@@ -11,7 +11,7 @@ COPY . .
 
 RUN go mod download
 
-RUN go build -o /app/main cmd/api/main.go && chmod +x /app/main
+RUN go build -o /app/main ./cmd/api && chmod +x /app/main
 
 FROM alpine:latest
 

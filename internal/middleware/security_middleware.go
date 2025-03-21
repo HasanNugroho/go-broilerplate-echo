@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/internal/configs"
-	"github.com/HasanNugroho/starter-golang/internal/pkg/model"
+	"github.com/HasanNugroho/starter-golang/internal/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
 func SecurityMiddleware(cfg *configs.Configuration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Host != cfg.Security.ExpectedHost {
-			model.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
+			response.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
 			c.Abort()
 			return
 		}

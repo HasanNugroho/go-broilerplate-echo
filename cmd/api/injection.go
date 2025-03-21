@@ -4,8 +4,8 @@
 package main
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal"
 	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/internal/routes"
 	"github.com/HasanNugroho/starter-golang/internal/users"
 	"github.com/HasanNugroho/starter-golang/internal/users/repository"
 	"github.com/gin-gonic/gin"
@@ -20,10 +20,10 @@ var userSet = wire.NewSet(
 	users.NewUserHandler,
 )
 
-func InitializeApp(r *gin.Engine, cfg *configs.RDBMSConfig) (*internal.RouteConfig, error) {
+func InitializeRoute(r *gin.Engine, cfg *configs.RDBMSConfig) (*routes.RouteConfig, error) {
 	wire.Build(
 		userSet,
-		internal.NewRouter,
+		routes.NewRouter,
 	)
 
 	return nil, nil

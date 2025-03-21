@@ -7,9 +7,9 @@ import (
 )
 
 type IUserRepository interface {
-	Create(user *entity.User, ctx *gin.Context) error
-	FindById(id string, ctx *gin.Context) (model.UserModel, error)
-	FindAll(search interface{}, ctx *gin.Context) ([]model.UserModel, error)
-	Update(id string, user entity.User, ctx *gin.Context) error
-	Delete(id string, ctx *gin.Context) error
+	Create(ctx *gin.Context, user *entity.User) error
+	FindById(ctx *gin.Context, id string) (model.UserModel, error)
+	FindAll(ctx *gin.Context) ([]model.UserModel, error)
+	Update(ctx *gin.Context, id string, user entity.User) error
+	Delete(ctx *gin.Context, id string) error
 }

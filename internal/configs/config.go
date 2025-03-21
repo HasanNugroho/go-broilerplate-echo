@@ -9,6 +9,7 @@ import (
 )
 
 type Configuration struct {
+	APP_NAME string
 	Version  string
 	Database RDBMSConfig
 	Redis    RedisConfig
@@ -35,6 +36,7 @@ func InitConfig() (*Configuration, error) {
 	}
 
 	config := &Configuration{
+		APP_NAME: utils.ToString(os.Getenv("APP_NAME"), "go"),
 		Version:  utils.ToString(os.Getenv("VERSION"), "1.0.0"),
 		AppEnv:   strings.ToLower(utils.ToString(os.Getenv("APP_ENV"), "development")),
 		Server:   LoadServerConfig(),

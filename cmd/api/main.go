@@ -1,9 +1,9 @@
 package main
 
 import (
-	"net"
+	"fmt"
 
-	"github.com/HasanNugroho/starter-golang/cmd/docs"
+	"github.com/HasanNugroho/starter-golang/docs"
 	config "github.com/HasanNugroho/starter-golang/internal/configs"
 	"github.com/HasanNugroho/starter-golang/internal/middleware"
 	"github.com/gin-gonic/gin"
@@ -16,6 +16,25 @@ const (
 	ProductionEnv = "production"
 )
 
+// @title           Swagger Example API
+// @version         1.0
+// @description     This is a sample server celler server.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:7000
+// @BasePath  /api/v1
+
+// @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	// Initialize configuration
 	cfg, err := config.InitConfig()
@@ -56,9 +75,7 @@ func main() {
 	r := config.NewGin(cfg)
 	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
 
-	docs.SwaggerInfo.BasePath = "/api/v1"
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	loadSwagger(r, cfg)
 
 	// Initialize Rate Limiter if enabled
 	if cfg.Security.RateLimit != "" {
@@ -70,15 +87,30 @@ func main() {
 		r.Use(middleware.RateLimit(limiter))
 	}
 
-	route, _ := InitializeApp(r, &cfg.Database)
+	route, err := InitializeRoute(r, &cfg.Database)
+
+	if err != nil {
+		config.Logger.Fatal().Msg("❌ Failed to initialize routes: " + err.Error())
+		panic(1)
+	}
 	route.SetupRoutes()
 
-	// Start server
-	serverAddr := net.JoinHostPort(cfg.Server.ServerHost, cfg.Server.ServerPort)
-	// config.Logger.Info().Msg("🚀 Server running at " + serverAddr)
-	err = r.Run(serverAddr)
+	for _, route := range r.Routes() {
+		fmt.Println("Registered Route:", route.Method, route.Path)
+	}
+
+	err = r.Run(fmt.Sprintf(":%s", cfg.Server.ServerPort))
 	if err != nil {
 		config.Logger.Fatal().Msg(err.Error())
 	}
 
+}
+
+func loadSwagger(r *gin.Engine, cfg *config.Configuration) {
+	docs.SwaggerInfo.Title = cfg.APP_NAME
+	docs.SwaggerInfo.Version = cfg.Version
+	docs.SwaggerInfo.Description = cfg.APP_NAME
+	docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", cfg.Server.ServerHost, cfg.Server.ServerPort)
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }
