@@ -7,39 +7,46 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
-	"gorm.io/gorm"
 )
 
-// ULID type for GORM
-type ULID ulid.ULID
-
-// Implement fmt.Stringer interface for ULID
-func (u ULID) String() string {
-	return ulid.ULID(u).String()
+// ULID type untuk GORM
+type ULID struct {
+	ulid.ULID
 }
 
-// Implement GORM custom scanner & valuer for ULID
+// Convert ULID ke String
+func (u ULID) String() string {
+	return u.ULID.String()
+}
+
+// Scan ULID dari database (membaca nilai dari DB)
 func (u *ULID) Scan(value interface{}) error {
+	if value == nil {
+		return fmt.Errorf("ULID value is nil")
+	}
+
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("failed to scan ULID: %v", value)
 	}
-	ulid, err := ulid.Parse(str)
+
+	parsedULID, err := ulid.Parse(str)
 	if err != nil {
 		return err
 	}
-	*u = ULID(ulid)
+
+	u.ULID = parsedULID
 	return nil
 }
 
+// Menyimpan ULID sebagai string di database
 func (u ULID) Value() (driver.Value, error) {
 	return u.String(), nil
 }
 
-// Generate new ULID before saving to DB
-func (u *ULID) BeforeCreate(tx *gorm.DB) error {
+// Generate ULID Baru
+func NewULID() ULID {
 	entropy := rand.New(rand.NewSource(time.Now().UnixNano()))
 	newULID := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
-	*u = ULID(newULID)
-	return nil
+	return ULID{newULID}
 }

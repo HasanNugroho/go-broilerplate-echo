@@ -53,7 +53,7 @@ const docTemplate = `{
                                             "data": {
                                                 "type": "array",
                                                 "items": {
-                                                    "$ref": "#/definitions/model.UserModel"
+                                                    "$ref": "#/definitions/model.UserModelResponse"
                                                 }
                                             }
                                         }
@@ -82,9 +82,20 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Create an user",
+                "parameters": [
+                    {
+                        "description": "User Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UserCreateUpdateModel"
+                        }
+                    }
+                ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/response.SuccessResponse"
                         }
@@ -112,7 +123,21 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "model.UserModel": {
+        "model.UserCreateUpdateModel": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UserModelResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -125,12 +150,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "updated_at": {
                     "type": "string"
                 }
             }

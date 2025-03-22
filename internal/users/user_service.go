@@ -31,7 +31,13 @@ func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateUpdateModel
 		Name:     user.Name,
 		Password: password,
 	}
-	return u.repo.Create(ctx, &payload)
+
+	err = u.repo.Create(ctx, &payload)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, error) {
@@ -39,23 +45,12 @@ func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, er
 	panic("not implemented")
 }
 
-func (u *UserService) FindAll(ctx *gin.Context) ([]model.UserModel, error) {
+func (u *UserService) FindAll(ctx *gin.Context) ([]model.UserModelResponse, error) {
 	users, err := u.repo.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	// Convert entity.User ke model.UserModel
-	var userModels []model.UserModel
-	for _, user := range users {
-		userModels = append(userModels, model.UserModel{
-			ID:    user.ID,
-			Email: user.Email,
-			Name:  user.Name,
-		})
-	}
-
-	return userModels, nil
+	return users, nil
 }
 
 func (u *UserService) Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error {

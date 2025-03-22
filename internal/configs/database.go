@@ -61,11 +61,11 @@ func loadRDBMSConfig() (dbConfig RDBMSConfig) {
 		User:            utils.ToString(os.Getenv("DBUSER"), ""),
 		Pass:            utils.ToString(os.Getenv("DBPASS"), ""),
 		TimeZone:        utils.ToString(os.Getenv("DBTIMEZONE"), "Asia/Jakarta"),
-		LogLevel:        normalizeLogLevel(utils.ToInt("DBLOGLEVEL", 1)),
-		MaxIdleConns:    utils.ToInt("DBMAXIDLECONNS", 10),
-		MaxOpenConns:    utils.ToInt("DBMAXOPENCONNS", 100),
-		ConnMaxLifetime: utils.ToDuration("DBCONNMAXLIFETIME", 30*time.Minute),
-		ConnMaxIdleTime: utils.ToDuration("DBCONNMAXIDLETIME", 10*time.Minute),
+		LogLevel:        normalizeLogLevel(utils.ToInt(os.Getenv("DBLOGLEVEL"), 1)),
+		MaxIdleConns:    utils.ToInt(os.Getenv("DBMAXIDLECONNS"), 10),
+		MaxOpenConns:    utils.ToInt(os.Getenv("DBMAXOPENCONNS"), 100),
+		ConnMaxLifetime: utils.ToDuration(os.Getenv("DBCONNMAXLIFETIME"), 30*time.Minute),
+		ConnMaxIdleTime: utils.ToDuration(os.Getenv("DBCONNMAXIDLETIME"), 10*time.Minute),
 	}
 
 	// Load SSL

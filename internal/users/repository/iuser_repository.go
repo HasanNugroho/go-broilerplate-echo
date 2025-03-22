@@ -9,7 +9,7 @@ import (
 type IUserRepository interface {
 	Create(ctx *gin.Context, user *entity.User) error
 	FindById(ctx *gin.Context, id string) (model.UserModel, error)
-	FindAll(ctx *gin.Context) ([]model.UserModel, error)
+	FindAll(ctx *gin.Context) ([]model.UserModelResponse, error)
 	Update(ctx *gin.Context, id string, user entity.User) error
 	Delete(ctx *gin.Context, id string) error
 }
