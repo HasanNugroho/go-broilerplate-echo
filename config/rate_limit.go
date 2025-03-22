@@ -1,4 +1,4 @@
-package configs
+package config
 
 import (
 	"log"
@@ -10,7 +10,7 @@ import (
 )
 
 // InitRateLimiter - initialize the rate limiter instance
-func InitRateLimiter(cfg *Configuration, formattedRateLimit string, trustedPlatform string) (limiterInstance *limiter.Limiter, err error) {
+func InitRateLimiter(cfg *Config, formattedRateLimit string, trustedPlatform string) (limiterInstance *limiter.Limiter, err error) {
 	if formattedRateLimit == "" {
 		return nil, nil
 	}

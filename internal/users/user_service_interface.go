@@ -1,6 +1,7 @@
 package users
 
 import (
+	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
 )
@@ -8,7 +9,7 @@ import (
 type IUserService interface {
 	Create(ctx *gin.Context, user *model.UserCreateUpdateModel) error
 	FindById(ctx *gin.Context, id string) (model.UserModel, error)
-	FindAll(ctx *gin.Context) ([]model.UserModelResponse, error)
+	FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error)
 	Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error
 	Delete(ctx *gin.Context, id string) error
 }

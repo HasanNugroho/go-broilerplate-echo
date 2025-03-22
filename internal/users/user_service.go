@@ -1,7 +1,8 @@
 package users
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal/pkg/security"
+	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/HasanNugroho/starter-golang/internal/users/entity"
 	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/HasanNugroho/starter-golang/internal/users/repository"
@@ -21,7 +22,7 @@ func NewUserService(repo repository.IUserRepository) *UserService {
 
 // ✅ Implementasi harus cocok dengan `IUserService`
 func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateUpdateModel) error {
-	password, err := security.HashPassword([]byte(user.Password))
+	password, err := utils.HashPassword([]byte(user.Password))
 	if err != nil {
 		return err
 	}
@@ -45,12 +46,23 @@ func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, er
 	panic("not implemented")
 }
 
-func (u *UserService) FindAll(ctx *gin.Context) ([]model.UserModelResponse, error) {
-	users, err := u.repo.FindAll(ctx)
+func (u *UserService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
+	// Dapatkan daftar users dan total item dari repository
+	users, totalItems, err := u.repo.FindAll(ctx, filter)
 	if err != nil {
-		return nil, err
+		return shared.DataWithPagination{}, err
 	}
-	return users, nil
+
+	// build pagination meta
+	paginate := utils.BuildPagination(filter, int64(totalItems))
+
+	// Buat response dengan pagination
+	result := shared.DataWithPagination{
+		Items:  users,
+		Paging: paginate,
+	}
+
+	return result, nil
 }
 
 func (u *UserService) Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error {

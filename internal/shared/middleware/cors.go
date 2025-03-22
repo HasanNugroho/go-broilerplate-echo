@@ -1,13 +1,13 @@
 package middleware
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func SetCORS(cfg *configs.Configuration) gin.HandlerFunc {
-	allowOrigins := cfg.Server.AllowedOrigins
+func SetCORS(config *config.Config) gin.HandlerFunc {
+	allowOrigins := config.Server.AllowedOrigins
 	if len(allowOrigins) == 0 {
 		allowOrigins = []string{"*"}
 	}

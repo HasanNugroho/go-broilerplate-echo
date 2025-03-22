@@ -1,17 +1,19 @@
 package repository
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/config"
+	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/HasanNugroho/starter-golang/internal/users/entity"
 	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
 )
 
 type UserRepository struct {
-	db *configs.RDBMSConfig
+	db *config.DBConfig
 }
 
-func NewUserRepository(db *configs.RDBMSConfig) *UserRepository {
+func NewUserRepository(db *config.DBConfig) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}
@@ -26,25 +28,37 @@ func (u *UserRepository) FindById(ctx *gin.Context, id string) (model.UserModel,
 	panic("not implemented") // TODO: Implement
 }
 
-func (u *UserRepository) FindAll(ctx *gin.Context) ([]model.UserModelResponse, error) {
+func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]model.UserModelResponse, int, error) {
 	var users []entity.User
+	var totalItems int64
+
 	query := u.db.Client.WithContext(ctx)
 
-	result := query.Select([]string{"id", "name", "email", "created_at"}).Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
+	// Hitung total data sebelum pagination
+	if err := query.Model(&entity.User{}).Count(&totalItems).Error; err != nil {
+		return nil, 0, err
 	}
 
+	// Query data dengan pagination
+	result := query.Scopes(utils.Paginate(filter)).
+		Select([]string{"id", "name", "email", "created_at"}).
+		Find(&users)
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	// Konversi ke response model
 	var userModels []model.UserModelResponse
 	for _, user := range users {
 		userModels = append(userModels, model.UserModelResponse{
-			ID:    (user.ID).String(),
-			Email: user.Email,
-			Name:  user.Name,
+			ID:        (user.ID).String(),
+			Email:     user.Email,
+			Name:      user.Name,
+			CreatedAt: user.CreatedAt,
 		})
 	}
 
-	return userModels, nil
+	return userModels, int(totalItems), nil
 }
 
 func (u *UserRepository) Update(ctx *gin.Context, id string, user entity.User) error {

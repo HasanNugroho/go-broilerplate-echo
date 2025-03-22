@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/internal/users"
 	"github.com/gin-gonic/gin"
 )
@@ -9,7 +9,7 @@ import (
 type RouteConfig struct {
 	App         *gin.Engine
 	UserHandler *users.UserHandler
-	Logger      *configs.LoggerConfig
+	Logger      *config.LoggerConfig
 }
 
 func NewRouter(app *gin.Engine, userHandler *users.UserHandler) *RouteConfig {
