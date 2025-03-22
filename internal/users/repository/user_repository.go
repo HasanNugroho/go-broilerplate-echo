@@ -26,19 +26,19 @@ func (u *UserRepository) FindById(ctx *gin.Context, id string) (model.UserModel,
 	panic("not implemented") // TODO: Implement
 }
 
-func (u *UserRepository) FindAll(ctx *gin.Context) ([]model.UserModel, error) {
+func (u *UserRepository) FindAll(ctx *gin.Context) ([]model.UserModelResponse, error) {
 	var users []entity.User
 	query := u.db.Client.WithContext(ctx)
 
-	result := query.Find(&users)
+	result := query.Select([]string{"id", "name", "email", "created_at"}).Find(&users)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
-	var userModels []model.UserModel
+	var userModels []model.UserModelResponse
 	for _, user := range users {
-		userModels = append(userModels, model.UserModel{
-			ID:    user.ID,
+		userModels = append(userModels, model.UserModelResponse{
+			ID:    (user.ID).String(),
 			Email: user.Email,
 			Name:  user.Name,
 		})

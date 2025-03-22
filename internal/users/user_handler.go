@@ -22,7 +22,8 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Success      200  {object}  response.SuccessResponse
+// @Param        user  body  model.UserCreateUpdateModel  true  "User Data"
+// @Success      201  {object}  response.SuccessResponse
 // @Failure      400  {object}  response.ErrorResponse
 // @Failure      404  {object}  response.ErrorResponse
 // @Failure      500  {object}  response.ErrorResponse
@@ -33,6 +34,8 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 	if err := c.userService.Create(ctx, &user); err != nil {
 		response.SendError(ctx, 400, "create data failed", err)
 	}
+
+	response.SendSuccess(ctx, 201, "users created successfully", nil)
 }
 
 // FindAllUsers godoc
@@ -41,7 +44,7 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Success      200  {array}   response.SuccessResponse{data=[]model.UserModel}
+// @Success      200  {array}   response.SuccessResponse{data=[]model.UserModelResponse}
 // @Failure      500  {object}  response.ErrorResponse
 // @Router       /users [get]
 func (c *UserHandler) FindAll(ctx *gin.Context) {

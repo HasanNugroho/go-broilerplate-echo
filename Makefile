@@ -83,6 +83,11 @@ migrate-down:
 	@echo "⬇️ Rolling back migrations..."
 	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
 
+# Rollback database migrations
+migrate-force:
+	@echo "⬇️ Force migrations..."
+	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" force 1
+
 ## ---------------- Utilities ----------------
 
 # Clean up generated files

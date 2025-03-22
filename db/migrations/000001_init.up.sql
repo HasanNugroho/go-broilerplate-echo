@@ -1,12 +1,22 @@
-DROP TABLE users;
+CREATE TABLE users (
+    id VARCHAR(26) PRIMARY KEY,
+    email TEXT,
+    name TEXT,
+    password TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-CREATE TABLE "users" (
-    "id" UUID PRIMARY KEY,
-    "email" TEXT,
-    "name" TEXT,
-    "password" TEXT,
-    "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) engine = innodb;
+-- Buat trigger untuk auto-update kolom updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE INDEX idx_users_id ON users (id);
+CREATE TRIGGER trigger_update_updated_at
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();

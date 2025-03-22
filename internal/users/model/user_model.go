@@ -18,3 +18,10 @@ type UserCreateUpdateModel struct {
 	Name     string `json:"name"`
 	Password string `json:"password"`
 }
+
+type UserModelResponse struct {
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}

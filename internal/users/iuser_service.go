@@ -8,7 +8,7 @@ import (
 type IUserService interface {
 	Create(ctx *gin.Context, user *model.UserCreateUpdateModel) error
 	FindById(ctx *gin.Context, id string) (model.UserModel, error)
-	FindAll(ctx *gin.Context) ([]model.UserModel, error)
+	FindAll(ctx *gin.Context) ([]model.UserModelResponse, error)
 	Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error
 	Delete(ctx *gin.Context, id string) error
 }
