@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/HasanNugroho/starter-golang/docs"
-	config "github.com/HasanNugroho/starter-golang/internal/configs"
-	"github.com/HasanNugroho/starter-golang/internal/middleware"
+	"github.com/HasanNugroho/starter-golang/cmd/docs"
+	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	swaggerfiles "github.com/swaggo/files"
@@ -15,6 +15,8 @@ import (
 const (
 	ProductionEnv = "production"
 )
+
+var appConfig *config.Config
 
 // @title           Swagger Example API
 // @version         1.0
@@ -37,22 +39,22 @@ const (
 // @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	// Initialize configuration
-	cfg, err := config.InitConfig()
+	appConfig, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal().Msg("❌ Failed to initialize config: " + err.Error())
 	}
 
 	// Set production mode if applicable
-	if cfg.AppEnv == ProductionEnv {
+	if appConfig.AppEnv == ProductionEnv {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	// Initialize Logger
-	config.InitLogger(cfg)
+	config.InitLogger(appConfig)
 
 	// Initialize RDBMS if enabled
-	if cfg.Database.Enabled {
-		db, err := config.InitDB(&cfg.Database)
+	if appConfig.Database.Enabled {
+		db, err := config.InitDB(&appConfig.Database)
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
@@ -61,9 +63,9 @@ func main() {
 	}
 
 	// Initialize Redis if enabled
-	if cfg.Redis.Enabled {
+	if appConfig.Redis.Enabled {
 		var err error
-		redisClient, err := config.InitRedis(&cfg.Redis)
+		redisClient, err := config.InitRedis(&appConfig.Redis)
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
@@ -72,14 +74,14 @@ func main() {
 		defer config.ShutdownRedis(redisClient)
 	}
 
-	r := config.NewGin(cfg)
-	r.Use(middleware.SetCORS(cfg), middleware.SecurityMiddleware(cfg))
+	r := config.NewGin(appConfig)
+	r.Use(middleware.SetCORS(appConfig), middleware.SecurityMiddleware(appConfig))
 
-	loadSwagger(r, cfg)
+	loadSwagger(r, appConfig)
 
 	// Initialize Rate Limiter if enabled
-	if cfg.Security.RateLimit != "" {
-		limiter, err := config.InitRateLimiter(cfg, cfg.Security.RateLimit, cfg.Security.TrustedPlatform)
+	if appConfig.Security.RateLimit != "" {
+		limiter, err := config.InitRateLimiter(appConfig, appConfig.Security.RateLimit, appConfig.Security.TrustedPlatform)
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
@@ -87,7 +89,7 @@ func main() {
 		r.Use(middleware.RateLimit(limiter))
 	}
 
-	route, err := InitializeRoute(r, &cfg.Database)
+	route, err := InitializeRoute(r, &appConfig.Database)
 
 	if err != nil {
 		config.Logger.Fatal().Msg("❌ Failed to initialize routes: " + err.Error())
@@ -99,18 +101,18 @@ func main() {
 		fmt.Println("Registered Route:", route.Method, route.Path)
 	}
 
-	err = r.Run(fmt.Sprintf(":%s", cfg.Server.ServerPort))
+	err = r.Run(fmt.Sprintf(":%s", appConfig.Server.ServerPort))
 	if err != nil {
 		config.Logger.Fatal().Msg(err.Error())
 	}
 
 }
 
-func loadSwagger(r *gin.Engine, cfg *config.Configuration) {
-	docs.SwaggerInfo.Title = cfg.APP_NAME
-	docs.SwaggerInfo.Version = cfg.Version
-	docs.SwaggerInfo.Description = cfg.APP_NAME
-	docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", cfg.Server.ServerHost, cfg.Server.ServerPort)
+func loadSwagger(r *gin.Engine, appConfig *config.Config) {
+	docs.SwaggerInfo.Title = appConfig.AppName
+	docs.SwaggerInfo.Version = appConfig.Version
+	docs.SwaggerInfo.Description = appConfig.AppName
+	docs.SwaggerInfo.Host = fmt.Sprintf("%s:%s", appConfig.Server.ServerHost, appConfig.Server.ServerPort)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

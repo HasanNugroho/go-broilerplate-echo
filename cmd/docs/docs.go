@@ -37,35 +37,68 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "Get all users",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "total data per-page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "page",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "keyword",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "allOf": [
-                                    {
-                                        "$ref": "#/definitions/response.SuccessResponse"
-                                    },
-                                    {
-                                        "type": "object",
-                                        "properties": {
-                                            "data": {
-                                                "type": "array",
-                                                "items": {
-                                                    "$ref": "#/definitions/model.UserModelResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/shared.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/shared.DataWithPagination"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/model.UserModelResponse"
+                                                            }
+                                                        }
+                                                    }
                                                 }
-                                            }
+                                            ]
                                         }
                                     }
-                                ]
-                            }
+                                }
+                            ]
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
+                            "$ref": "#/definitions/shared.Response"
                         }
                     }
                 }
@@ -97,25 +130,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/response.SuccessResponse"
+                            "$ref": "#/definitions/shared.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
+                            "$ref": "#/definitions/shared.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
+                            "$ref": "#/definitions/shared.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
+                            "$ref": "#/definitions/shared.Response"
                         }
                     }
                 }
@@ -154,19 +187,33 @@ const docTemplate = `{
                 }
             }
         },
-        "response.ErrorResponse": {
+        "shared.DataWithPagination": {
             "type": "object",
             "properties": {
-                "error": {},
-                "message": {
-                    "type": "string"
+                "items": {},
+                "paging": {
+                    "$ref": "#/definitions/shared.Pagination"
+                }
+            }
+        },
+        "shared.Pagination": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
                 },
-                "status": {
+                "page": {
+                    "type": "integer"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "total_pages": {
                     "type": "integer"
                 }
             }
         },
-        "response.SuccessResponse": {
+        "shared.Response": {
             "type": "object",
             "properties": {
                 "data": {},

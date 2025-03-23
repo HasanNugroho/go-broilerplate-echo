@@ -3,7 +3,7 @@ package entity
 import (
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"gorm.io/gorm"
 )
 

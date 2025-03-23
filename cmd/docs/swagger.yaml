@@ -20,15 +20,24 @@ definitions:
       name:
         type: string
     type: object
-  response.ErrorResponse:
+  shared.DataWithPagination:
     properties:
-      error: {}
-      message:
-        type: string
-      status:
+      items: {}
+      paging:
+        $ref: '#/definitions/shared.Pagination'
+    type: object
+  shared.Pagination:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
         type: integer
     type: object
-  response.SuccessResponse:
+  shared.Response:
     properties:
       data: {}
       message:
@@ -58,26 +67,46 @@ paths:
       consumes:
       - application/json
       description: Retrieve a list of all users
+      parameters:
+      - default: 10
+        description: total data per-page
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 1
+        description: page
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: keyword
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              allOf:
-              - $ref: '#/definitions/response.SuccessResponse'
-              - properties:
-                  data:
-                    items:
-                      $ref: '#/definitions/model.UserModelResponse'
-                    type: array
-                type: object
-            type: array
+            allOf:
+            - $ref: '#/definitions/shared.Response'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/shared.DataWithPagination'
+                  - properties:
+                      items:
+                        items:
+                          $ref: '#/definitions/model.UserModelResponse'
+                        type: array
+                    type: object
+              type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: '#/definitions/shared.Response'
       summary: Get all users
       tags:
       - users
@@ -98,19 +127,19 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/response.SuccessResponse'
+            $ref: '#/definitions/shared.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: '#/definitions/shared.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: '#/definitions/shared.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/response.ErrorResponse'
+            $ref: '#/definitions/shared.Response'
       summary: Create an user
       tags:
       - users

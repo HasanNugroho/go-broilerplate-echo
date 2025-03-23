@@ -1,4 +1,4 @@
-package configs
+package config
 
 import (
 	"fmt"
@@ -7,27 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/internal/pkg/hook"
-	"github.com/HasanNugroho/starter-golang/internal/pkg/utils"
+	"github.com/HasanNugroho/starter-golang/internal/shared/hook"
 	"github.com/rs/zerolog"
 )
 
-// LoggerConfig ...
-type LoggerConfig struct {
-	LogLevel string
-	Log      *zerolog.Logger
-}
-
 var Logger zerolog.Logger
 
-func LoadLoggerConfig() (loggerConfig LoggerConfig) {
-	loggerConfig.LogLevel = utils.ToString(os.Getenv("LOG_LEVEL"), "error")
-	return
-}
-
-func InitLogger(cfg *Configuration) {
+func InitLogger(config *Config) {
 	// Parse log level
-	level, err := zerolog.ParseLevel(cfg.Logger.LogLevel)
+	level, err := zerolog.ParseLevel(config.Logger.LogLevel)
 	if err != nil {
 		level = zerolog.InfoLevel // Default to INFO if parsing fails
 	}
@@ -37,7 +25,7 @@ func InitLogger(cfg *Configuration) {
 	var output io.Writer = os.Stdout
 
 	// Pretty-print logs for non-production environments
-	if cfg.AppEnv != "production" {
+	if config.AppEnv != "production" {
 		output = zerolog.ConsoleWriter{
 			Out:        os.Stderr,
 			TimeFormat: time.RFC3339,
@@ -59,7 +47,7 @@ func InitLogger(cfg *Configuration) {
 		Logger()
 
 		// Apply hook **only in production mode**
-	if cfg.AppEnv == "production" {
+	if config.AppEnv == "production" {
 		loggerBuilder = loggerBuilder.Hook(&hook.LoggerHook{})
 		fmt.Println("✅ Logger hook enabled in production mode")
 	}

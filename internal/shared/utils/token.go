@@ -1,21 +1,21 @@
-package security
+package utils
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/internal/configs"
+	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // var secretKey = []byte(configs.GeneralConfig.Security.JWT_SECRET_KEY)
 
 // Function to create JWT tokens with claims
-func CreateToken(data interface{}) (string, error) {
+func CreateToken(config *config.Config, data interface{}) (string, error) {
 	// Create a new JWT token with claims
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"data": data,
-		"exp":  time.Now().Add(time.Hour * time.Duration(configs.GeneralConfig.Security.JWT_EXPIRED)).Unix(),
+		"exp":  time.Now().Add(time.Hour * time.Duration(config.Security.JWTExpired)).Unix(),
 		"iat":  time.Now().Unix(),
 	})
 

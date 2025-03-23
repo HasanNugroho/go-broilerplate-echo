@@ -40,7 +40,7 @@ gen-di:
 # Generate Swagger API docs
 gen-docs:
 	@echo "📖 Generating API documentation..."
-	@swag init -g cmd/api/main.go
+	@swag init -g cmd/api/main.go -o cmd/docs
 
 ## ---------------- Database ----------------
 
