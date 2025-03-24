@@ -1,10 +1,15 @@
 package users
 
 import (
+	"errors"
+	"fmt"
+
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"gorm.io/gorm"
 )
 
 type UserHandler struct {
@@ -30,10 +35,18 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Failure      500  {object}  shared.Response
 // @Router       /users [post]
 func (c *UserHandler) Create(ctx *gin.Context) {
-	var user model.UserCreateUpdateModel
+	var user model.UserCreateModel
 	ctx.Bind(&user)
+	validate := validator.New()
+
+	if err := validate.Struct(user); err != nil {
+		utils.SendError(ctx, 400, "create data failed", err.Error())
+		return
+	}
+
 	if err := c.userService.Create(ctx, &user); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err)
+		utils.SendError(ctx, 400, "create data failed", err.Error())
+		return
 	}
 
 	utils.SendSuccess(ctx, 201, "users created successfully", nil)
@@ -56,14 +69,111 @@ func (c *UserHandler) FindAll(ctx *gin.Context) {
 
 	// Binding query parameters
 	if err := ctx.ShouldBindQuery(&filter); err != nil {
-		utils.SendError(ctx, 403, "failed to fetch users", err)
+		utils.SendError(ctx, 400, "failed to fetch users", err)
 		return
 	}
 
 	users, err := c.userService.FindAll(ctx, &filter)
 	if err != nil {
-		utils.SendError(ctx, 403, "failed to fetch users", err)
+		utils.SendError(ctx, 400, "failed to fetch users", err)
 		return
 	}
 	utils.SendSuccess(ctx, 200, "users retrieved successfully", users)
+}
+
+// FindUser godoc
+// @Summary      Get all users
+// @Description  Retrieve a user by ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param id path string true "id"
+// @Success      200     {object}  shared.Response{data=model.UserModel}
+// @Failure      500     {object}  shared.Response
+// @Router       /users/{id} [get]
+func (c *UserHandler) FindById(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	validate := validator.New()
+	if err := validate.Var(id, "required,ulid"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+		return
+	}
+
+	user, err := c.userService.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			utils.SendError(ctx, 404, fmt.Sprintf("User with ID %s not found", id), err.Error())
+			return
+		}
+		utils.SendError(ctx, 500, "Failed to fetch user", err.Error())
+		return
+	}
+	utils.SendSuccess(ctx, 200, "User retrieved successfully", user)
+}
+
+// UpdateUser godoc
+// @Summary      Update user
+// @Description  Update user
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param id path string true "id"
+// @Param        user  body  model.UserCreateUpdateModel  true  "User Data"
+// @Success      201  {object}  shared.Response
+// @Failure      400  {object}  shared.Response
+// @Failure      404  {object}  shared.Response
+// @Failure      500  {object}  shared.Response
+// @Router       /users/{id} [put]
+func (c *UserHandler) Update(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var user model.UserUpdateModel
+	validate := validator.New()
+
+	ctx.Bind(&user)
+
+	if err := validate.Var(id, "required,ulid"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+		return
+	}
+
+	if err := validate.Struct(user); err != nil {
+		utils.SendError(ctx, 400, "Bad request", err.Error())
+		return
+	}
+
+	if err := c.userService.Update(ctx, id, &user); err != nil {
+		utils.SendError(ctx, 400, "create data failed", err)
+		return
+	}
+
+	utils.SendSuccess(ctx, 201, "users updated successfully", nil)
+}
+
+// DeleteUser godoc
+// @Summary      Delete user
+// @Description  Delete user by ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param id path string true "id"
+// @Success      200     {object}  shared.Response
+// @Failure      500     {object}  shared.Response
+// @Router       /users/{id} [delete]
+func (c *UserHandler) Delete(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	validate := validator.New()
+
+	if err := validate.Var(id, "required,ulid"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+		return
+	}
+
+	err := c.userService.Delete(ctx, id)
+	if err != nil {
+		utils.SendError(ctx, 400, "failed to delete user", err)
+		return
+	}
+	utils.SendSuccess(ctx, 200, "user deleted successfully", nil)
 }

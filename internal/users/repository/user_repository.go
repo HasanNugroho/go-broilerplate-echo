@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/HasanNugroho/starter-golang/config"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/HasanNugroho/starter-golang/internal/users/entity"
 	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type UserRepository struct {
@@ -24,8 +27,28 @@ func (u *UserRepository) Create(ctx *gin.Context, user *entity.User) error {
 	return result.Error
 }
 
-func (u *UserRepository) FindById(ctx *gin.Context, id string) (model.UserModel, error) {
-	panic("not implemented") // TODO: Implement
+func (u *UserRepository) FindByEmail(ctx *gin.Context, email string) (entity.User, error) {
+	var user entity.User
+	result := u.db.Client.WithContext(ctx).Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return entity.User{}, nil
+		}
+		return entity.User{}, result.Error
+	}
+	return user, nil
+}
+
+func (u *UserRepository) FindById(ctx *gin.Context, id string) (entity.User, error) {
+	var user entity.User
+	result := u.db.Client.WithContext(ctx).Where("id = ?", id).First(&user)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return entity.User{}, gorm.ErrRecordNotFound
+		}
+		return entity.User{}, result.Error
+	}
+	return user, nil
 }
 
 func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]model.UserModelResponse, int, error) {
@@ -61,10 +84,10 @@ func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 	return userModels, int(totalItems), nil
 }
 
-func (u *UserRepository) Update(ctx *gin.Context, id string, user entity.User) error {
-	panic("not implemented") // TODO: Implement
+func (u *UserRepository) Update(ctx *gin.Context, id string, user *entity.User) error {
+	return u.db.Client.Where("id = ?", id).Updates(user).Error
 }
 
 func (u *UserRepository) Delete(ctx *gin.Context, id string) error {
-	panic("not implemented") // TODO: Implement
+	return u.db.Client.Where("id", id).Delete(&entity.User{}).Error
 }

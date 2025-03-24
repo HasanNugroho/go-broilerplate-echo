@@ -9,8 +9,9 @@ import (
 
 type IUserRepository interface {
 	Create(ctx *gin.Context, user *entity.User) error
-	FindById(ctx *gin.Context, id string) (model.UserModel, error)
+	FindByEmail(ctx *gin.Context, email string) (entity.User, error)
+	FindById(ctx *gin.Context, id string) (entity.User, error)
 	FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]model.UserModelResponse, int, error)
-	Update(ctx *gin.Context, id string, user entity.User) error
+	Update(ctx *gin.Context, id string, user *entity.User) error
 	Delete(ctx *gin.Context, id string) error
 }

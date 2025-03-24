@@ -7,9 +7,9 @@ import (
 )
 
 type IUserService interface {
-	Create(ctx *gin.Context, user *model.UserCreateUpdateModel) error
+	Create(ctx *gin.Context, user *model.UserCreateModel) error
 	FindById(ctx *gin.Context, id string) (model.UserModel, error)
 	FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error)
-	Update(ctx *gin.Context, id string, user model.UserCreateUpdateModel) error
+	Update(ctx *gin.Context, id string, user *model.UserUpdateModel) error
 	Delete(ctx *gin.Context, id string) error
 }
