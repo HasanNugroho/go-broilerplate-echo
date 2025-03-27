@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/auth"
 	"github.com/HasanNugroho/starter-golang/internal/routes"
 	"github.com/HasanNugroho/starter-golang/internal/users"
 	"github.com/HasanNugroho/starter-golang/internal/users/repository"
@@ -20,9 +21,16 @@ var userSet = wire.NewSet(
 	users.NewUserHandler,
 )
 
-func InitializeRoute(r *gin.Engine, cfg *config.DBConfig) (*routes.RouteConfig, error) {
+var authSet = wire.NewSet(
+	auth.NewAuthService,
+	wire.Bind(new(auth.IAuthService), new(*auth.AuthService)),
+	auth.NewAuthHandler,
+)
+
+func InitializeRoute(r *gin.Engine, cfg *config.DatabaseConfig) (*routes.RouteConfig, error) {
 	wire.Build(
 		userSet,
+		authSet,
 		routes.NewRouter,
 	)
 

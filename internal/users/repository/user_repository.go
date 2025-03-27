@@ -13,10 +13,10 @@ import (
 )
 
 type UserRepository struct {
-	db *config.DBConfig
+	db *config.DatabaseConfig
 }
 
-func NewUserRepository(db *config.DBConfig) *UserRepository {
+func NewUserRepository(db *config.DatabaseConfig) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}

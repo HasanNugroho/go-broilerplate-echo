@@ -53,25 +53,32 @@ func main() {
 	config.InitLogger(appConfig)
 
 	// Initialize RDBMS if enabled
-	if appConfig.Database.Enabled {
-		db, err := config.InitDB(&appConfig.Database)
+	if appConfig.DB.Enabled {
+		db, err := appConfig.DB.InitDB()
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
-		defer config.ShutdownDB(db) // Ensure database is closed on exit
+		defer config.ShutdownDB(db)
 	}
 
 	// Initialize Redis if enabled
 	if appConfig.Redis.Enabled {
-		var err error
-		redisClient, err := config.InitRedis(&appConfig.Redis)
+		redisClient, err := appConfig.Redis.InitRedis()
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
-		// config.Database.Redis.Client = redisClient
 		defer config.ShutdownRedis(redisClient)
+	}
+
+	// Initialize Elastic if enabled
+	if appConfig.Search.Enabled {
+		err := appConfig.Search.SearchInit()
+		if err != nil {
+			config.Logger.Fatal().Msg(err.Error())
+			panic(1)
+		}
 	}
 
 	r := config.NewGin(appConfig)
@@ -89,7 +96,7 @@ func main() {
 		r.Use(middleware.RateLimit(limiter))
 	}
 
-	route, err := InitializeRoute(r, &appConfig.Database)
+	route, err := InitializeRoute(r, &appConfig.DB)
 
 	if err != nil {
 		config.Logger.Fatal().Msg("❌ Failed to initialize routes: " + err.Error())

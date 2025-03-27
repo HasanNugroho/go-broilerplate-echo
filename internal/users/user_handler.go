@@ -28,7 +28,7 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        user  body  model.UserCreateUpdateModel  true  "User Data"
+// @Param        user  body  model.UserCreateModel  true  "User Data"
 // @Success      201  {object}  shared.Response
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response
@@ -119,7 +119,7 @@ func (c *UserHandler) FindById(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param id path string true "id"
-// @Param        user  body  model.UserCreateUpdateModel  true  "User Data"
+// @Param        user  body  model.UserUpdateModel  true  "User Data"
 // @Success      201  {object}  shared.Response
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response

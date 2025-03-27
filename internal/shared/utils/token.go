@@ -5,46 +5,63 @@ import (
 	"time"
 
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/auth/model"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// var secretKey = []byte(configs.GeneralConfig.Security.JWT_SECRET_KEY)
+// GenerateAccessToken creates a JWT access token
+func GenerateAccessToken(cfg *config.Config, payload interface{}) (string, error) {
+	return createJWT(cfg.Security.JWTSecretKey, payload, time.Hour*time.Duration(cfg.Security.JWTExpired))
+}
 
-// Function to create JWT tokens with claims
-func CreateToken(config *config.Config, data interface{}) (string, error) {
-	// Create a new JWT token with claims
+// GenerateRefreshToken creates a JWT refresh token
+func GenerateRefreshToken(cfg *config.Config) (string, error) {
+	return createJWT(cfg.Security.JWTSecretKey, nil, time.Hour*time.Duration(cfg.Security.JWTRefreshTokenExpired))
+}
+
+// createJWT generates a JWT token with a given expiration time
+func createJWT(secretKey string, payload interface{}, expiration time.Duration) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"data": data,
-		"exp":  time.Now().Add(time.Hour * time.Duration(config.Security.JWTExpired)).Unix(),
+		"data": payload,
+		"exp":  time.Now().Add(expiration).Unix(),
 		"iat":  time.Now().Unix(),
 	})
 
-	fmt.Printf("Token claims added: %+v\n", claims)
-
-	tokenString, err := claims.SignedString("secretKey")
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return claims.SignedString([]byte(secretKey))
 }
 
-// Function to verify JWT tokens
-func VerifyToken(tokenString string) (*jwt.Token, error) {
-	// Parse the token with the secret key
+// ValidateToken verifies the given JWT token
+func ValidateToken(cfg *config.Config, tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return "secretKey", nil
+		return []byte(cfg.Security.JWTSecretKey), nil
 	})
 
-	// Check for verification errors
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if the token is valid
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}
 
-	// Return the verified token
 	return token, nil
+}
+
+// GenerateAuthToken creates both access and refresh tokens
+func GenerateAuthToken(cfg *config.Config, payload interface{}) (model.AuthResponse, error) {
+	accessToken, err := GenerateAccessToken(cfg, payload)
+	if err != nil {
+		return model.AuthResponse{}, err
+	}
+
+	refreshToken, err := GenerateRefreshToken(cfg)
+	if err != nil {
+		return model.AuthResponse{}, err
+	}
+
+	return model.AuthResponse{
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		Data:         payload,
+	}, nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"strings"
 
+	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -13,16 +14,19 @@ import (
 	"gorm.io/gorm"
 )
 
+var GlobalConfig Config
+
 // Config menyimpan semua konfigurasi aplikasi
 type Config struct {
-	AppName  string         `mapstructure:"APP_NAME"`
-	Version  string         `mapstructure:"VERSION"`
-	AppEnv   string         `mapstructure:"APP_ENV"`
-	Server   ServerConfig   `mapstructure:",squash"`
-	Database DBConfig       `mapstructure:",squash"`
-	Redis    RedisConfig    `mapstructure:",squash"`
-	Security SecurityConfig `mapstructure:",squash"`
-	Logger   LoggerConfig   `mapstructure:",squash"`
+	AppName  string                      `mapstructure:"APP_NAME"`
+	Version  string                      `mapstructure:"VERSION"`
+	AppEnv   string                      `mapstructure:"APP_ENV"`
+	Server   ServerConfig                `mapstructure:",squash"`
+	DB       DatabaseConfig              `mapstructure:",squash"`
+	Redis    RedisConfig                 `mapstructure:",squash"`
+	Security SecurityConfig              `mapstructure:",squash"`
+	Logger   LoggerConfig                `mapstructure:",squash"`
+	Search   modules.ElasticSearchConfig `mapstructure:",squash"`
 }
 
 // ServerConfig menyimpan konfigurasi server
@@ -34,7 +38,7 @@ type ServerConfig struct {
 }
 
 // RDBMSConfig menyimpan konfigurasi database
-type DBConfig struct {
+type DatabaseConfig struct {
 	Enabled         bool          `mapstructure:"ACTIVATE_RDBMS"`
 	Driver          string        `mapstructure:"DBDRIVER"`
 	Host            string        `mapstructure:"DBHOST"`
@@ -76,20 +80,21 @@ type RedisConfig struct {
 
 // SecurityConfig menyimpan konfigurasi keamanan aplikasi
 type SecurityConfig struct {
-	CheckOrigin       bool   `mapstructure:"ACTIVATE_ORIGIN_VALIDATION"`
-	RateLimit         string `mapstructure:"RATE_LIMIT"`
-	TrustedPlatform   string `mapstructure:"TRUSTED_PLATFORM"`
-	ExpectedHost      string `mapstructure:"EXPECTED_HOST"`
-	XFrameOptions     string `mapstructure:"X_FRAME_OPTIONS"`
-	ContentSecurity   string `mapstructure:"CONTENT_SECURITY_POLICY"`
-	XXSSProtection    string `mapstructure:"X_XSS_PROTECTION"`
-	StrictTransport   string `mapstructure:"STRICT_TRANSPORT_SECURITY"`
-	ReferrerPolicy    string `mapstructure:"REFERRER_POLICY"`
-	XContentTypeOpts  string `mapstructure:"X_CONTENT_TYPE_OPTIONS"`
-	PermissionsPolicy string `mapstructure:"PERMISSIONS_POLICY"`
-	JWTSecretKey      string `mapstructure:"JWT_SECRET_KEY"`
-	JWTExpired        int    `mapstructure:"JWT_EXPIRED" envDefault:"2"`
-	LimiterInstance   *limiter.Limiter
+	CheckOrigin            bool   `mapstructure:"ACTIVATE_ORIGIN_VALIDATION"`
+	RateLimit              string `mapstructure:"RATE_LIMIT"`
+	TrustedPlatform        string `mapstructure:"TRUSTED_PLATFORM"`
+	ExpectedHost           string `mapstructure:"EXPECTED_HOST"`
+	XFrameOptions          string `mapstructure:"X_FRAME_OPTIONS"`
+	ContentSecurity        string `mapstructure:"CONTENT_SECURITY_POLICY"`
+	XXSSProtection         string `mapstructure:"X_XSS_PROTECTION"`
+	StrictTransport        string `mapstructure:"STRICT_TRANSPORT_SECURITY"`
+	ReferrerPolicy         string `mapstructure:"REFERRER_POLICY"`
+	XContentTypeOpts       string `mapstructure:"X_CONTENT_TYPE_OPTIONS"`
+	PermissionsPolicy      string `mapstructure:"PERMISSIONS_POLICY"`
+	JWTSecretKey           string `mapstructure:"JWT_SECRET_KEY"`
+	JWTExpired             int    `mapstructure:"JWT_EXPIRED" envDefault:"2"`
+	JWTRefreshTokenExpired int    `mapstructure:"JWT_REFRESH_TOKEN_EXPIRED" envDefault:"24"`
+	LimiterInstance        *limiter.Limiter
 }
 
 // LoggerConfig menyimpan konfigurasi logger
@@ -108,13 +113,16 @@ func LoadConfig() (*Config, error) {
 		log.Printf("No .env file found, using system environment variables: %v", err)
 	}
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&GlobalConfig); err != nil {
 		return nil, err
 	}
 
-	// Memastikan AllowedOrigins tidak kosong
-	config.Server.AllowedOrigins = strings.Split(viper.GetString("ALLOWED_ORIGINS"), ",")
+	GlobalConfig.Server.AllowedOrigins = strings.Split(viper.GetString("ALLOWED_ORIGINS"), ",")
+	GlobalConfig.Search.Host = strings.Split(viper.GetString("ELASTICSEARCH_HOST"), ",")
 
-	return &config, nil
+	return &GlobalConfig, nil
+}
+
+func GetConfig() *Config {
+	return &GlobalConfig
 }

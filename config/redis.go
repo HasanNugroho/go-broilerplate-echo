@@ -10,7 +10,11 @@ import (
 )
 
 // InitRedis initializes the Redis client
-func InitRedis(config *RedisConfig) (*redis.Client, error) {
+func (config *RedisConfig) InitRedis() (*redis.Client, error) {
+	if !config.Enabled {
+		Logger.Warn().Msg("⚠️ Redis is disabled. Skipping initialization.")
+		return nil, nil
+	}
 	// Create Redis client
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", config.Host, strconv.Itoa(config.Port)),
