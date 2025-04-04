@@ -8,28 +8,27 @@ package main
 
 import (
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/auth"
-	"github.com/HasanNugroho/starter-golang/internal/routes"
-	"github.com/HasanNugroho/starter-golang/internal/users"
-	"github.com/HasanNugroho/starter-golang/internal/users/repository"
+	"github.com/HasanNugroho/starter-golang/internal"
+	"github.com/HasanNugroho/starter-golang/internal/core/auth"
+	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 )
 
 // Injectors from injection.go:
 
-func InitializeRoute(r *gin.Engine, cfg *config.DatabaseConfig) (*routes.RouteConfig, error) {
-	userRepository := repository.NewUserRepository(cfg)
+func InitializeRoute(r *gin.Engine, cfg *config.DatabaseConfig) (*internal.RouteConfig, error) {
+	userRepository := users.NewUserRepository(cfg)
 	userService := users.NewUserService(userRepository)
 	userHandler := users.NewUserHandler(userService)
 	authService := auth.NewAuthService(userRepository)
 	authHandler := auth.NewAuthHandler(authService)
-	routeConfig := routes.NewRouter(r, userHandler, authHandler)
+	routeConfig := internal.NewRouter(r, userHandler, authHandler)
 	return routeConfig, nil
 }
 
 // injection.go:
 
-var userSet = wire.NewSet(repository.NewUserRepository, wire.Bind(new(repository.IUserRepository), new(*repository.UserRepository)), users.NewUserService, wire.Bind(new(users.IUserService), new(*users.UserService)), users.NewUserHandler)
+var userSet = wire.NewSet(users.NewUserRepository, wire.Bind(new(users.IUserRepository), new(*users.UserRepository)), users.NewUserService, wire.Bind(new(users.IUserService), new(*users.UserService)), users.NewUserHandler)
 
 var authSet = wire.NewSet(auth.NewAuthService, wire.Bind(new(auth.IAuthService), new(*auth.AuthService)), auth.NewAuthHandler)

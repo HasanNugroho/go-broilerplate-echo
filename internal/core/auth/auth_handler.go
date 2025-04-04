@@ -2,7 +2,7 @@ package auth
 
 import (
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/auth/model"
+	"github.com/HasanNugroho/starter-golang/internal/core/auth/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"

@@ -6,7 +6,6 @@ import (
 
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"gorm.io/gorm"
@@ -28,14 +27,14 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Tags         users
 // @Accept       json
 // @Produce      json
-// @Param        user  body  model.UserCreateModel  true  "User Data"
+// @Param        user  body  UserCreateModel  true  "User Data"
 // @Success      201  {object}  shared.Response
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
 // @Router       /users [post]
 func (c *UserHandler) Create(ctx *gin.Context) {
-	var user model.UserCreateModel
+	var user UserCreateModel
 	ctx.Bind(&user)
 	validate := validator.New()
 
@@ -127,7 +126,7 @@ func (c *UserHandler) FindById(ctx *gin.Context) {
 // @Router       /users/{id} [put]
 func (c *UserHandler) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
-	var user model.UserUpdateModel
+	var user UserUpdateModel
 	validate := validator.New()
 
 	ctx.Bind(&user)

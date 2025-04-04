@@ -92,7 +92,7 @@ type SecurityConfig struct {
 	XContentTypeOpts       string `mapstructure:"X_CONTENT_TYPE_OPTIONS"`
 	PermissionsPolicy      string `mapstructure:"PERMISSIONS_POLICY"`
 	JWTSecretKey           string `mapstructure:"JWT_SECRET_KEY"`
-	JWTExpired             int    `mapstructure:"JWT_EXPIRED" envDefault:"2"`
+	JWTExpired             int    `mapstructure:"JWT_EXPIRED" envDefault:"15"`
 	JWTRefreshTokenExpired int    `mapstructure:"JWT_REFRESH_TOKEN_EXPIRED" envDefault:"24"`
 	LimiterInstance        *limiter.Limiter
 }

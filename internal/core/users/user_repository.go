@@ -1,13 +1,12 @@
-package repository
+package users
 
 import (
 	"errors"
 
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/core/users/entity"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/HasanNugroho/starter-golang/internal/users/entity"
-	"github.com/HasanNugroho/starter-golang/internal/users/model"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -51,7 +50,7 @@ func (u *UserRepository) FindById(ctx *gin.Context, id string) (entity.User, err
 	return user, nil
 }
 
-func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]model.UserModelResponse, int, error) {
+func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]UserModelResponse, int, error) {
 	var users []entity.User
 	var totalItems int64
 
@@ -71,9 +70,9 @@ func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 	}
 
 	// Konversi ke response model
-	var userModels []model.UserModelResponse
+	var userModels []UserModelResponse
 	for _, user := range users {
-		userModels = append(userModels, model.UserModelResponse{
+		userModels = append(userModels, UserModelResponse{
 			ID:        (user.ID).String(),
 			Email:     user.Email,
 			Name:      user.Name,

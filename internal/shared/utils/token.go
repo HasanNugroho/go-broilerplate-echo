@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/auth/model"
+	"github.com/HasanNugroho/starter-golang/internal/core/auth/model"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 // GenerateAccessToken creates a JWT access token
 func GenerateAccessToken(cfg *config.Config, payload interface{}) (string, error) {
-	return createJWT(cfg.Security.JWTSecretKey, payload, time.Hour*time.Duration(cfg.Security.JWTExpired))
+	return createJWT(cfg.Security.JWTSecretKey, payload, time.Minute*time.Duration(cfg.Security.JWTExpired))
 }
 
 // GenerateRefreshToken creates a JWT refresh token

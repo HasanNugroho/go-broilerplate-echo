@@ -1,9 +1,9 @@
-package routes
+package internal
 
 import (
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/auth"
-	"github.com/HasanNugroho/starter-golang/internal/users"
+	"github.com/HasanNugroho/starter-golang/internal/core/auth"
+	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/gin-gonic/gin"
 )
 
