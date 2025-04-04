@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  model.AuthModel:
+  auth.AuthModel:
     properties:
       email:
         type: string
@@ -10,7 +10,7 @@ definitions:
     - email
     - password
     type: object
-  model.AuthResponse:
+  auth.AuthResponse:
     properties:
       data: {}
       refresh_token:
@@ -18,55 +18,11 @@ definitions:
       token:
         type: string
     type: object
-  model.UserCreateModel:
+  auth.LogoutRequest:
     properties:
-      email:
+      refresh_token:
+        example: your-refresh-token
         type: string
-      name:
-        type: string
-      password:
-        minLength: 6
-        type: string
-    type: object
-  model.UserModel:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  model.UserModelResponse:
-    properties:
-      created_at:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  model.UserUpdateModel:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        minLength: 6
-        type: string
-    required:
-    - email
-    - name
-    - password
     type: object
   shared.DataWithPagination:
     properties:
@@ -93,6 +49,56 @@ definitions:
       status:
         type: integer
     type: object
+  users.UserCreateModel:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    type: object
+  users.UserModel:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  users.UserModelResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  users.UserUpdateModel:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
 host: localhost:7000
 info:
   contact: {}
@@ -100,6 +106,42 @@ info:
   title: Example Rest API
   version: "1.0"
 paths:
+  /auth/access-token:
+    post:
+      consumes:
+      - application/json
+      description: Renew token an user
+      parameters:
+      - description: Logout payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Renew token
+      tags:
+      - auth
   /auth/login:
     post:
       consumes:
@@ -111,7 +153,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/model.AuthModel'
+          $ref: '#/definitions/auth.AuthModel'
       produces:
       - application/json
       responses:
@@ -122,7 +164,7 @@ paths:
             - $ref: '#/definitions/shared.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/model.AuthResponse'
+                  $ref: '#/definitions/auth.AuthResponse'
               type: object
         "400":
           description: Bad Request
@@ -137,6 +179,42 @@ paths:
           schema:
             $ref: '#/definitions/shared.Response'
       summary: Login
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logout an user
+      parameters:
+      - description: Logout payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Logout
       tags:
       - auth
   /users:
@@ -176,7 +254,7 @@ paths:
                   - properties:
                       items:
                         items:
-                          $ref: '#/definitions/model.UserModelResponse'
+                          $ref: '#/definitions/users.UserModelResponse'
                         type: array
                     type: object
               type: object
@@ -184,6 +262,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Get all users
       tags:
       - users
@@ -197,7 +277,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/model.UserCreateModel'
+          $ref: '#/definitions/users.UserCreateModel'
       produces:
       - application/json
       responses:
@@ -217,6 +297,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Create an user
       tags:
       - users
@@ -242,6 +324,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Delete user
       tags:
       - users
@@ -265,12 +349,14 @@ paths:
             - $ref: '#/definitions/shared.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/model.UserModel'
+                  $ref: '#/definitions/users.UserModel'
               type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Get all users
       tags:
       - users
@@ -289,7 +375,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/model.UserUpdateModel'
+          $ref: '#/definitions/users.UserUpdateModel'
       produces:
       - application/json
       responses:
@@ -309,10 +395,14 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Update user
       tags:
       - users
 securityDefinitions:
-  BasicAuth:
-    type: basic
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

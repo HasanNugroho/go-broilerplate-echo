@@ -17,13 +17,13 @@ import (
 
 // Injectors from injection.go:
 
-func InitializeRoute(r *gin.Engine, cfg *config.DatabaseConfig) (*internal.RouteConfig, error) {
+func InitializeRoute(r *gin.Engine, cfg *config.Config) (*internal.RouteConfig, error) {
 	userRepository := users.NewUserRepository(cfg)
 	userService := users.NewUserService(userRepository)
 	userHandler := users.NewUserHandler(userService)
 	authService := auth.NewAuthService(userRepository)
 	authHandler := auth.NewAuthHandler(authService)
-	routeConfig := internal.NewRouter(r, userHandler, authHandler)
+	routeConfig := internal.NewRouter(r, cfg, userHandler, authHandler)
 	return routeConfig, nil
 }
 

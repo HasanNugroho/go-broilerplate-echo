@@ -33,6 +33,7 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
 // @Router       /users [post]
+// @Security ApiKeyAuth
 func (c *UserHandler) Create(ctx *gin.Context) {
 	var user UserCreateModel
 	ctx.Bind(&user)
@@ -60,9 +61,10 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 // @Param limit query int false "total data per-page" minimum(1) default(10)
 // @Param page query int false "page" minimum(1) default(1)
 // @Param search query string false "keyword"
-// @Success      200     {object}  shared.Response{data=shared.DataWithPagination{items=[]model.UserModelResponse}}
+// @Success      200     {object}  shared.Response{data=shared.DataWithPagination{items=[]UserModelResponse}}
 // @Failure      500     {object}  shared.Response
 // @Router       /users [get]
+// @Security ApiKeyAuth
 func (c *UserHandler) FindAll(ctx *gin.Context) {
 	var filter shared.PaginationFilter
 
@@ -87,9 +89,10 @@ func (c *UserHandler) FindAll(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param id path string true "id"
-// @Success      200     {object}  shared.Response{data=model.UserModel}
+// @Success      200     {object}  shared.Response{data=UserModel}
 // @Failure      500     {object}  shared.Response
 // @Router       /users/{id} [get]
+// @Security ApiKeyAuth
 func (c *UserHandler) FindById(ctx *gin.Context) {
 	id := ctx.Param("id")
 
@@ -118,12 +121,13 @@ func (c *UserHandler) FindById(ctx *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param id path string true "id"
-// @Param        user  body  model.UserUpdateModel  true  "User Data"
+// @Param        user  body  UserUpdateModel  true  "User Data"
 // @Success      201  {object}  shared.Response
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
 // @Router       /users/{id} [put]
+// @Security ApiKeyAuth
 func (c *UserHandler) Update(ctx *gin.Context) {
 	id := ctx.Param("id")
 	var user UserUpdateModel
@@ -159,6 +163,7 @@ func (c *UserHandler) Update(ctx *gin.Context) {
 // @Success      200     {object}  shared.Response
 // @Failure      500     {object}  shared.Response
 // @Router       /users/{id} [delete]
+// @Security ApiKeyAuth
 func (c *UserHandler) Delete(ctx *gin.Context) {
 	id := ctx.Param("id")
 

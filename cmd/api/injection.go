@@ -26,7 +26,7 @@ var authSet = wire.NewSet(
 	auth.NewAuthHandler,
 )
 
-func InitializeRoute(r *gin.Engine, cfg *config.DatabaseConfig) (*internal.RouteConfig, error) {
+func InitializeRoute(r *gin.Engine, cfg *config.Config) (*internal.RouteConfig, error) {
 	wire.Build(
 		userSet,
 		authSet,

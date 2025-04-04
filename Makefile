@@ -61,12 +61,12 @@ env-down:
 # Run development container
 docker-run:
 	@echo "🐳 Running dev container..."
-	@docker compose --env-file ./.env -f ./docker-compose.dev.yml up --build -d
+	@docker compose --env-file ./.env -f ./deploy/docker-compose.dev.yml up --build -d
 
 # Shutdown development container
 docker-down:
 	@echo "🛑 Stopping dev container..."
-	@docker compose -f ./docker-compose.dev.yml down --rmi all
+	@docker compose -f ./deploy/docker-compose.dev.yml down --rmi all
 
 ## ---------------- Migrations ----------------
 

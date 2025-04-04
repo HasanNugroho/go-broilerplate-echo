@@ -25,7 +25,9 @@ var appConfig *config.Config
 // @host      localhost:7000
 // @BasePath  /api/v1
 
-// @securityDefinitions.basic  BasicAuth
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	// Initialize configuration
@@ -86,7 +88,7 @@ func main() {
 		r.Use(middleware.RateLimit(limiter))
 	}
 
-	route, err := InitializeRoute(r, &appConfig.DB)
+	route, err := InitializeRoute(r, appConfig)
 
 	if err != nil {
 		config.Logger.Fatal().Msg("❌ Failed to initialize routes: " + err.Error())

@@ -15,9 +15,9 @@ type UserRepository struct {
 	db *config.DatabaseConfig
 }
 
-func NewUserRepository(db *config.DatabaseConfig) *UserRepository {
+func NewUserRepository(config *config.Config) *UserRepository {
 	return &UserRepository{
-		db: db,
+		db: &config.DB,
 	}
 }
 
