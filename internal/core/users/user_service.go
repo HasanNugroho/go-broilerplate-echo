@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/HasanNugroho/starter-golang/internal/core/users/entity"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
@@ -37,7 +36,7 @@ func (u *UserService) Create(ctx *gin.Context, user *UserCreateModel) error {
 		return err
 	}
 
-	payload := entity.User{
+	payload := User{
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: password,
@@ -93,7 +92,7 @@ func (u *UserService) Update(ctx *gin.Context, id string, user *UserUpdateModel)
 		return fmt.Errorf("user with ID %s not found: %w", id, err)
 	}
 
-	updatedUser := entity.User{
+	updatedUser := User{
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: existingUser.Password,

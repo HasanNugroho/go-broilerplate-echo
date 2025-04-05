@@ -1,4 +1,4 @@
-package entity
+package roles
 
 import (
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"

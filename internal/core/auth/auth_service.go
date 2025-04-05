@@ -102,11 +102,3 @@ func (a *AuthService) GenerateAccessToken(ctx *gin.Context, config *config.Confi
 		Data:         data,
 	}, nil
 }
-
-func (a *AuthService) Register(ctx *gin.Context, email string, password string) (interface{}, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (a *AuthService) ResetPassword(ctx *gin.Context, email string, password string) error {
-	panic("not implemented") // TODO: Implement
-}
