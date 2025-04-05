@@ -3,7 +3,8 @@ include .env
 
 # Default target
 .PHONY: all build run watch setup setup-db setup-db-down docker-run docker-down \
-        gen-di gen-docs create-migration migrate-up migrate-down clean
+        gen-di gen-docs create-migration migrate-up migrate-down migrate-force clean \
+        elastic
 
 all: build test
 
@@ -44,27 +45,28 @@ gen-docs:
 
 ## ---------------- Database ----------------
 
-# Setup & start database container
-setup-db:
-	@echo "🐘 Starting database container..."
-	@docker compose --env-file ./.env -f ./docker-compose.db.yml up --build -d
+# Setup & start environment container
+env-up:
+	@echo "🐘 Starting environment container..."
 
-# Shutdown database container
-setup-db-down:
-	@echo "🛑 Stopping database container..."
-	@docker compose -f ./docker-compose.db.yml down --rmi all
+	@docker compose --env-file ./.env -f ./deploy/docker-compose.env.yml up --build -d
+
+# Shutdown environment container
+env-down:
+	@echo "🛑 Stopping environment container..."
+	@docker compose --env-file ./.env -f ./deploy/docker-compose.env.yml down
 
 ## ---------------- Docker ----------------
 
 # Run development container
 docker-run:
 	@echo "🐳 Running dev container..."
-	@docker compose --env-file ./.env -f ./docker-compose.dev.yml up --build -d
+	@docker compose --env-file ./.env -f ./deploy/docker-compose.dev.yml up --build -d
 
 # Shutdown development container
 docker-down:
 	@echo "🛑 Stopping dev container..."
-	@docker compose -f ./docker-compose.dev.yml down --rmi all
+	@docker compose -f ./deploy/docker-compose.dev.yml down --rmi all
 
 ## ---------------- Migrations ----------------
 
@@ -83,7 +85,7 @@ migrate-down:
 	@echo "⬇️ Rolling back migrations..."
 	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
 
-# Rollback database migrations
+# Force rollback migrations
 migrate-force:
 	@echo "⬇️ Force migrations..."
 	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" force 1

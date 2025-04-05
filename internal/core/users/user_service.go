@@ -6,24 +6,21 @@ import (
 
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/HasanNugroho/starter-golang/internal/users/entity"
-	"github.com/HasanNugroho/starter-golang/internal/users/model"
-	"github.com/HasanNugroho/starter-golang/internal/users/repository"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type UserService struct {
-	repo repository.IUserRepository
+	repo IUserRepository
 }
 
-func NewUserService(repo repository.IUserRepository) *UserService {
+func NewUserService(repo IUserRepository) *UserService {
 	return &UserService{
 		repo: repo,
 	}
 }
 
-func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateModel) error {
+func (u *UserService) Create(ctx *gin.Context, user *UserCreateModel) error {
 	existingUser, err := u.repo.FindByEmail(ctx, user.Email)
 
 	if err != nil {
@@ -39,7 +36,7 @@ func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateModel) erro
 		return err
 	}
 
-	payload := entity.User{
+	payload := User{
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: password,
@@ -53,16 +50,16 @@ func (u *UserService) Create(ctx *gin.Context, user *model.UserCreateModel) erro
 	return nil
 }
 
-func (u *UserService) FindById(ctx *gin.Context, id string) (model.UserModel, error) {
+func (u *UserService) FindById(ctx *gin.Context, id string) (UserModel, error) {
 	user, err := u.repo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return model.UserModel{}, fmt.Errorf("user with ID %s not found", id)
+			return UserModel{}, fmt.Errorf("user with ID %s not found", id)
 		}
-		return model.UserModel{}, err
+		return UserModel{}, err
 	}
 
-	return model.UserModel{
+	return UserModel{
 		ID:        user.ID.String(),
 		Email:     user.Email,
 		Name:      user.Name,
@@ -89,13 +86,13 @@ func (u *UserService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter)
 	return result, nil
 }
 
-func (u *UserService) Update(ctx *gin.Context, id string, user *model.UserUpdateModel) error {
+func (u *UserService) Update(ctx *gin.Context, id string, user *UserUpdateModel) error {
 	existingUser, err := u.repo.FindById(ctx, id)
 	if err != nil {
 		return fmt.Errorf("user with ID %s not found: %w", id, err)
 	}
 
-	updatedUser := entity.User{
+	updatedUser := User{
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: existingUser.Password,

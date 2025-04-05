@@ -27,7 +27,12 @@ const (
 )
 
 // InitDB initializes the database connection
-func InitDB(config *DBConfig) (*gorm.DB, error) {
+func (config *DatabaseConfig) InitDB() (*gorm.DB, error) {
+	if !config.Enabled {
+		Logger.Warn().Msg("⚠️ Database is disabled. Skipping initialization.")
+		return nil, nil
+	}
+
 	// Get GORM dialect based on the database driver
 	dialect, err := getDialect(config)
 	if err != nil {
@@ -71,7 +76,7 @@ func InitDB(config *DBConfig) (*gorm.DB, error) {
 	return db, nil
 }
 
-func getDialect(config *DBConfig) (gorm.Dialector, error) {
+func getDialect(config *DatabaseConfig) (gorm.Dialector, error) {
 	switch config.Driver {
 	case "mysql":
 		mysqlDsn, err := buildMySQLDSN(config)
@@ -88,7 +93,7 @@ func getDialect(config *DBConfig) (gorm.Dialector, error) {
 }
 
 // buildMySQLDSN constructs MySQL DSN
-func buildMySQLDSN(config *DBConfig) (string, error) {
+func buildMySQLDSN(config *DatabaseConfig) (string, error) {
 	address := net.JoinHostPort(config.Host, strconv.Itoa(config.Port))
 	Logger.Error().Msg(strconv.Itoa(config.Port))
 
@@ -116,7 +121,7 @@ func buildMySQLDSN(config *DBConfig) (string, error) {
 }
 
 // buildPostgresDSN constructs PostgreSQL DSN
-func buildPostgresDSN(config *DBConfig) string {
+func buildPostgresDSN(config *DatabaseConfig) string {
 	var dsn strings.Builder
 
 	// Tambahkan parameter dasar
@@ -161,7 +166,7 @@ func ShutdownDB(db *gorm.DB) {
 }
 
 // InitTLSMySQL initializes TLS configuration for MySQL
-func InitTLSMySQL(config *DBConfig) error {
+func InitTLSMySQL(config *DatabaseConfig) error {
 	rootCA := config.Ssl.RootCA
 	serverCert := config.Ssl.ServerCert
 	clientCert := config.Ssl.ClientCert
