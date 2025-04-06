@@ -76,7 +76,7 @@ type RedisConfig struct {
 // SecurityConfig menyimpan konfigurasi keamanan aplikasi
 type SecurityConfig struct {
 	CheckOrigin            bool   `mapstructure:"ACTIVATE_ORIGIN_VALIDATION"`
-	RateLimit              string `mapstructure:"RATE_LIMIT"`
+	RateLimit              string `mapstructure:"RATE_LIMIT" envDefault:"60-M"`
 	TrustedPlatform        string `mapstructure:"TRUSTED_PLATFORM"`
 	ExpectedHost           string `mapstructure:"EXPECTED_HOST"`
 	XFrameOptions          string `mapstructure:"X_FRAME_OPTIONS"`
