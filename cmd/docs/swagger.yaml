@@ -24,6 +24,22 @@ definitions:
         example: your-refresh-token
         type: string
     type: object
+  roles.RoleModel:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      permission:
+        type: string
+    type: object
+  roles.RoleUpdateModel:
+    properties:
+      name:
+        type: string
+      permission:
+        type: string
+    type: object
   shared.DataWithPagination:
     properties:
       items: {}
@@ -217,6 +233,189 @@ paths:
       summary: Logout
       tags:
       - auth
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all roles
+      parameters:
+      - default: 10
+        description: total data per-page
+        in: query
+        minimum: 1
+        name: limit
+        type: integer
+      - default: 1
+        description: page
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: keyword
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/shared.Response'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/shared.DataWithPagination'
+                  - properties:
+                      items:
+                        items:
+                          $ref: '#/definitions/roles.RoleModel'
+                        type: array
+                    type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Create an role
+      parameters:
+      - description: role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/roles.RoleModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Create an role
+      tags:
+      - roles
+  /roles/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete role by ID
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete role
+      tags:
+      - roles
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a role by ID
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/shared.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/roles.RoleModel'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all roles
+      tags:
+      - roles
+    put:
+      consumes:
+      - application/json
+      description: Update role
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/roles.RoleUpdateModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update role
+      tags:
+      - roles
   /users:
     get:
       consumes:

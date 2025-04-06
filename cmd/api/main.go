@@ -6,7 +6,6 @@ import (
 	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/internal"
-	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -29,21 +28,10 @@ const (
 
 func main() {
 	// Initialize configuration and other components
-	apps := internal.AppsInit()
-
-	apps.Router.Use(middleware.SetCORS(apps.Config), middleware.SecurityMiddleware(apps.Config))
+	router := gin.Default()
+	apps := internal.AppsInit(router)
 
 	loadSwagger(apps.Router, apps.Config)
-
-	// Initialize Rate Limiter if enabled
-	if apps.Config.Security.RateLimit != "" {
-		limiter, err := config.InitRateLimiter(apps.Config, apps.Redis, apps.Config.Security.RateLimit, apps.Config.Security.TrustedPlatform)
-		if err != nil {
-			config.Logger.Fatal().Msg(err.Error())
-			panic(1)
-		}
-		apps.Router.Use(middleware.RateLimit(limiter))
-	}
 
 	err := apps.Router.Run(fmt.Sprintf(":%s", apps.Config.Server.ServerPort))
 	if err != nil {
