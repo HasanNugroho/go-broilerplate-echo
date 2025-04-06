@@ -32,7 +32,6 @@ func (config *RedisConfig) InitRedis() (*redis.Client, error) {
 	}
 
 	// Assign Redis client to config
-	config.Client = redisClient
 	Logger.Info().Msg("✅ Redis connected successfully!")
 
 	return redisClient, nil

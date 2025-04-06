@@ -4,13 +4,14 @@ import (
 	"log"
 	"net"
 
+	redisClient "github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 	redis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
 // InitRateLimiter - initialize the rate limiter instance
-func InitRateLimiter(cfg *Config, formattedRateLimit string, trustedPlatform string) (limiterInstance *limiter.Limiter, err error) {
+func InitRateLimiter(config *Config, redisClient *redisClient.Client, formattedRateLimit string, trustedPlatform string) (limiterInstance *limiter.Limiter, err error) {
 	if formattedRateLimit == "" {
 		return nil, nil
 	}
@@ -23,13 +24,13 @@ func InitRateLimiter(cfg *Config, formattedRateLimit string, trustedPlatform str
 	ipv6Mask := net.CIDRMask(64, 128)
 	options := []limiter.Option{limiter.WithIPv6Mask(ipv6Mask)}
 
-	if cfg.Redis.Enabled {
+	if config.Redis.Enabled {
 		// Create a store with the redis client.
-		if cfg.Redis.Client == nil {
+		if redisClient == nil {
 			log.Fatal("Redis client is not initialized")
 		}
 
-		store, err := redis.NewStoreWithOptions(cfg.Redis.Client, limiter.StoreOptions{
+		store, err := redis.NewStoreWithOptions(redisClient, limiter.StoreOptions{
 			Prefix:   "limiter",
 			MaxRetry: 3,
 		})
@@ -39,8 +40,8 @@ func InitRateLimiter(cfg *Config, formattedRateLimit string, trustedPlatform str
 			return nil, err
 		}
 
-		cfg.Security.LimiterInstance = limiter.New(store, rate, options...)
-		return cfg.Security.LimiterInstance, nil
+		config.Security.LimiterInstance = limiter.New(store, rate, options...)
+		return config.Security.LimiterInstance, nil
 	}
 
 	// default use memory store
@@ -49,6 +50,6 @@ func InitRateLimiter(cfg *Config, formattedRateLimit string, trustedPlatform str
 		options = append(options, limiter.WithClientIPHeader(trustedPlatform))
 	}
 
-	cfg.Security.LimiterInstance = limiter.New(store, rate, options...)
-	return cfg.Security.LimiterInstance, nil
+	config.Security.LimiterInstance = limiter.New(store, rate, options...)
+	return config.Security.LimiterInstance, nil
 }

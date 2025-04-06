@@ -3,21 +3,21 @@ package auth
 import (
 	"net/http"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
 type AuthHandler struct {
-	authService IAuthService
-	config      *config.Config
+	authService AuthService
+	app         *app.Apps
 }
 
-func NewAuthHandler(us IAuthService) *AuthHandler {
+func NewAuthHandler(us AuthService, app *app.Apps) *AuthHandler {
 	return &AuthHandler{
 		authService: us,
-		config:      config.GetConfig(),
+		app:         app,
 	}
 }
 
@@ -46,7 +46,7 @@ func (c *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := c.authService.Login(ctx, c.config, user.Email, user.Password)
+	token, err := c.authService.Login(ctx, c.app, user.Email, user.Password)
 	if err != nil {
 		utils.SendError(ctx, http.StatusUnauthorized, "Login failed", err.Error())
 		return
@@ -69,7 +69,7 @@ func (c *AuthHandler) Login(ctx *gin.Context) {
 // @Router       /auth/logout [post]
 // @Security ApiKeyAuth
 func (c *AuthHandler) Logout(ctx *gin.Context) {
-	err := c.authService.Logout(ctx, c.config)
+	err := c.authService.Logout(ctx, c.app)
 	if err != nil {
 		utils.SendError(ctx, http.StatusUnauthorized, "Logout failed", err.Error())
 		return
@@ -92,7 +92,7 @@ func (c *AuthHandler) Logout(ctx *gin.Context) {
 // @Router       /auth/access-token [post]
 // @Security ApiKeyAuth
 func (c *AuthHandler) GenerateAccessToken(ctx *gin.Context) {
-	token, err := c.authService.GenerateAccessToken(ctx, c.config)
+	token, err := c.authService.GenerateAccessToken(ctx, c.app)
 	if err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Renew token failed", err.Error())
 		return
