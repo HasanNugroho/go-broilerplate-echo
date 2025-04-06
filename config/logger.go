@@ -11,9 +11,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var Logger zerolog.Logger
+var Logger *zerolog.Logger
 
-func InitLogger(config *Config) {
+func InitLogger(config *Config) *zerolog.Logger {
 	// Parse log level
 	level, err := zerolog.ParseLevel(config.Logger.LogLevel)
 	if err != nil {
@@ -53,5 +53,6 @@ func InitLogger(config *Config) {
 	}
 
 	// Assign the global logger
-	Logger = loggerBuilder
+	Logger = &loggerBuilder
+	return Logger
 }

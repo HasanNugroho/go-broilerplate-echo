@@ -71,8 +71,6 @@ func (config *DatabaseConfig) InitDB() (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(config.ConnMaxLifetime)
 	sqlDB.SetConnMaxIdleTime(config.ConnMaxIdleTime)
 
-	config.Client = db
-
 	return db, nil
 }
 

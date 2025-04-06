@@ -5,9 +5,9 @@ import (
 
 	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -15,8 +15,6 @@ import (
 const (
 	ProductionEnv = "production"
 )
-
-var appConfig *config.Config
 
 // @title           Example Rest API
 // @version         1.0
@@ -30,77 +28,24 @@ var appConfig *config.Config
 // @name Authorization
 
 func main() {
-	// Initialize configuration
-	appConfig, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal().Msg("❌ Failed to initialize config: " + err.Error())
-	}
+	// Initialize configuration and other components
+	apps := internal.AppsInit()
 
-	// Set production mode if applicable
-	if appConfig.AppEnv == ProductionEnv {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	apps.Router.Use(middleware.SetCORS(apps.Config), middleware.SecurityMiddleware(apps.Config))
 
-	// Initialize Logger
-	config.InitLogger(appConfig)
-
-	// Initialize RDBMS if enabled
-	if appConfig.DB.Enabled {
-		db, err := appConfig.DB.InitDB()
-		if err != nil {
-			config.Logger.Fatal().Msg(err.Error())
-			panic(1)
-		}
-		defer config.ShutdownDB(db)
-	}
-
-	// Initialize Redis if enabled
-	if appConfig.Redis.Enabled {
-		redisClient, err := appConfig.Redis.InitRedis()
-		if err != nil {
-			config.Logger.Fatal().Msg(err.Error())
-			panic(1)
-		}
-		defer config.ShutdownRedis(redisClient)
-	}
-
-	// Initialize Elastic if enabled
-	if appConfig.Search.Enabled {
-		err := appConfig.Search.SearchInit()
-		if err != nil {
-			config.Logger.Fatal().Msg(err.Error())
-			panic(1)
-		}
-	}
-
-	r := config.NewGin(appConfig)
-	r.Use(middleware.SetCORS(appConfig), middleware.SecurityMiddleware(appConfig))
-
-	loadSwagger(r, appConfig)
+	loadSwagger(apps.Router, apps.Config)
 
 	// Initialize Rate Limiter if enabled
-	if appConfig.Security.RateLimit != "" {
-		limiter, err := config.InitRateLimiter(appConfig, appConfig.Security.RateLimit, appConfig.Security.TrustedPlatform)
+	if apps.Config.Security.RateLimit != "" {
+		limiter, err := config.InitRateLimiter(apps.Config, apps.Redis, apps.Config.Security.RateLimit, apps.Config.Security.TrustedPlatform)
 		if err != nil {
 			config.Logger.Fatal().Msg(err.Error())
 			panic(1)
 		}
-		r.Use(middleware.RateLimit(limiter))
+		apps.Router.Use(middleware.RateLimit(limiter))
 	}
 
-	route, err := InitializeRoute(r, appConfig)
-
-	if err != nil {
-		config.Logger.Fatal().Msg("❌ Failed to initialize routes: " + err.Error())
-		panic(1)
-	}
-	route.SetupRoutes()
-
-	for _, route := range r.Routes() {
-		fmt.Println("Registered Route:", route.Method, route.Path)
-	}
-
-	err = r.Run(fmt.Sprintf(":%s", appConfig.Server.ServerPort))
+	err := apps.Router.Run(fmt.Sprintf(":%s", apps.Config.Server.ServerPort))
 	if err != nil {
 		config.Logger.Fatal().Msg(err.Error())
 	}

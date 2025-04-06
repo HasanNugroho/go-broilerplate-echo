@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -22,13 +22,13 @@ func createJWT(secretKey string, payload interface{}, expiration time.Duration) 
 }
 
 // ValidateToken verifies the given JWT token
-func ValidateToken(config *config.Config, tokenStr string) (*jwt.Token, error) {
-	if config.Redis.Enabled && IsTokenRevoked(config, tokenStr) {
+func ValidateToken(app *app.Apps, tokenStr string) (*jwt.Token, error) {
+	if app.Config.Redis.Enabled && IsTokenRevoked(app, tokenStr) {
 		return nil, fmt.Errorf("token has been revoked")
 	}
 
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		return []byte(config.Security.JWTSecretKey), nil
+		return []byte(app.Config.Security.JWTSecretKey), nil
 	})
 
 	if err != nil || !token.Valid {
@@ -37,7 +37,7 @@ func ValidateToken(config *config.Config, tokenStr string) (*jwt.Token, error) {
 	return token, nil
 }
 
-func GenerateAuthToken(config *config.Config, payload interface{}) (accessToken string, refreshToken string, err error) {
+func GenerateAuthToken(app *app.Apps, payload interface{}) (accessToken string, refreshToken string, err error) {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to marshal payload: %w", err)
@@ -48,12 +48,12 @@ func GenerateAuthToken(config *config.Config, payload interface{}) (accessToken 
 		return "", "", fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	accessToken, err = createJWT(config.Security.JWTSecretKey, parsedMap, time.Minute*time.Duration(config.Security.JWTExpired))
+	accessToken, err = createJWT(app.Config.Security.JWTSecretKey, parsedMap, time.Minute*time.Duration(app.Config.Security.JWTExpired))
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err = createJWT(config.Security.JWTSecretKey, nil, time.Hour*time.Duration(config.Security.JWTRefreshTokenExpired))
+	refreshToken, err = createJWT(app.Config.Security.JWTSecretKey, nil, time.Hour*time.Duration(app.Config.Security.JWTRefreshTokenExpired))
 	if err != nil {
 		return "", "", err
 	}
@@ -64,7 +64,7 @@ func GenerateAuthToken(config *config.Config, payload interface{}) (accessToken 
 	}
 
 	// Store refresh token
-	if err := StoreRefreshToken(config, userID, refreshToken, time.Hour*time.Duration(config.Security.JWTRefreshTokenExpired)); err != nil {
+	if err := StoreRefreshToken(app, userID, refreshToken, time.Hour*time.Duration(app.Config.Security.JWTRefreshTokenExpired)); err != nil {
 		return "", "", fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
@@ -72,24 +72,24 @@ func GenerateAuthToken(config *config.Config, payload interface{}) (accessToken 
 }
 
 // RefreshAccessToken validates refresh token and returns a new access token
-func RefreshAccessToken(config *config.Config, refreshToken string) (string, error) {
+func RefreshAccessToken(app *app.Apps, refreshToken string) (string, error) {
 	ctx := context.Background()
 
 	// Cek apakah token valid
-	_, err := ValidateToken(config, refreshToken)
+	_, err := ValidateToken(app, refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("invalid refresh token: %w", err)
 	}
 
 	// Cek apakah refresh token sudah tidak berlaku
 	key := "refresh_token:" + refreshToken
-	userID, err := config.Redis.Client.Get(ctx, key).Result()
+	userID, err := app.Redis.Get(ctx, key).Result()
 	if err != nil {
 		return "", fmt.Errorf("refresh token not found or revoked")
 	}
 
 	newPayload := map[string]interface{}{"user_id": userID}
-	newAccessToken, err := createJWT(config.Security.JWTSecretKey, newPayload, time.Minute*time.Duration(config.Security.JWTExpired))
+	newAccessToken, err := createJWT(app.Config.Security.JWTSecretKey, newPayload, time.Minute*time.Duration(app.Config.Security.JWTExpired))
 	if err != nil {
 		return "", err
 	}
@@ -98,8 +98,8 @@ func RefreshAccessToken(config *config.Config, refreshToken string) (string, err
 }
 
 // RevokeToken stores the token in Redis with an expiration time
-func RevokeToken(config *config.Config, tokenString string, refreshToken string) error {
-	redisClient := config.Redis.Client
+func RevokeToken(app *app.Apps, tokenString string, refreshToken string) error {
+	redisClient := app.Redis
 	ctx := context.Background()
 
 	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
@@ -123,7 +123,7 @@ func RevokeToken(config *config.Config, tokenString string, refreshToken string)
 	}
 
 	if refreshToken != "" {
-		if err := RevokeRefreshToken(config, refreshToken); err != nil {
+		if err := RevokeRefreshToken(app, refreshToken); err != nil {
 			return fmt.Errorf("failed to revoke token")
 		}
 	}
@@ -132,19 +132,19 @@ func RevokeToken(config *config.Config, tokenString string, refreshToken string)
 }
 
 // RevokeRefreshToken deletes refresh token from Redis
-func RevokeRefreshToken(config *config.Config, refreshToken string) error {
+func RevokeRefreshToken(app *app.Apps, refreshToken string) error {
 	key := "refresh_token:" + refreshToken
-	return config.Redis.Client.Del(context.Background(), key).Err()
+	return app.Redis.Del(context.Background(), key).Err()
 }
 
 // IsTokenRevoked checks if a token is in the Redis blacklist
-func IsTokenRevoked(config *config.Config, tokenString string) bool {
-	redisClient := config.Redis.Client
+func IsTokenRevoked(app *app.Apps, tokenString string) bool {
+	redisClient := app.Redis
 	_, err := redisClient.Get(context.Background(), "blacklist:"+tokenString).Result()
 	return err == nil
 }
 
-func StoreRefreshToken(config *config.Config, userID string, refreshToken string, expiration time.Duration) error {
+func StoreRefreshToken(app *app.Apps, userID string, refreshToken string, expiration time.Duration) error {
 	key := "refresh_token:" + refreshToken
-	return config.Redis.Client.Set(context.Background(), key, userID, expiration).Err()
+	return app.Redis.Set(context.Background(), key, userID, expiration).Err()
 }

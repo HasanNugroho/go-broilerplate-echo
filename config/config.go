@@ -7,11 +7,8 @@ import (
 	"strings"
 
 	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
-	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 	"github.com/ulule/limiter/v3"
-	"gorm.io/gorm"
 )
 
 var GlobalConfig Config
@@ -53,7 +50,6 @@ type DatabaseConfig struct {
 	ConnMaxLifetime time.Duration `mapstructure:"DBCONNMAXLIFETIME"`
 	ConnMaxIdleTime time.Duration `mapstructure:"DBCONNMAXIDLETIME"`
 	Ssl             DBSsl         `mapstructure:",squash"`
-	Client          *gorm.DB
 }
 
 // DBSsl menyimpan konfigurasi SSL untuk database
@@ -75,7 +71,6 @@ type RedisConfig struct {
 	DB       int    `mapstructure:"REDIS_DB"`
 	PoolSize int    `mapstructure:"POOLSIZE"`
 	ConnTTL  int    `mapstructure:"CONNTTL"`
-	Client   *redis.Client
 }
 
 // SecurityConfig menyimpan konfigurasi keamanan aplikasi
@@ -100,10 +95,8 @@ type SecurityConfig struct {
 // LoggerConfig menyimpan konfigurasi logger
 type LoggerConfig struct {
 	LogLevel string `mapstructure:"LOG_LEVEL"`
-	Log      *zerolog.Logger
 }
 
-// LoadConfig membaca konfigurasi dari environment
 func LoadConfig() (*Config, error) {
 	viper.SetConfigFile(".env")
 	viper.AutomaticEnv()

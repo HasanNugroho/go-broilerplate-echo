@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
@@ -20,7 +20,7 @@ func NewAuthService(repo users.IUserRepository) *AuthService {
 	}
 }
 
-func (a *AuthService) Login(ctx *gin.Context, config *config.Config, email string, password string) (AuthResponse, error) {
+func (a *AuthService) Login(ctx *gin.Context, app *app.Apps, email string, password string) (AuthResponse, error) {
 	existingUser, err := a.repo.FindByEmail(ctx, email)
 	if err != nil || existingUser.Email == "" {
 		return AuthResponse{}, fmt.Errorf("Incorrect email or password")
@@ -37,7 +37,7 @@ func (a *AuthService) Login(ctx *gin.Context, config *config.Config, email strin
 		CreatedAt: existingUser.CreatedAt,
 	}
 
-	accessToken, refreshToken, err := utils.GenerateAuthToken(config, payload)
+	accessToken, refreshToken, err := utils.GenerateAuthToken(app, payload)
 	if err != nil {
 		return AuthResponse{}, fmt.Errorf("Error creating token: %s", err.Error())
 	}
@@ -49,7 +49,7 @@ func (a *AuthService) Login(ctx *gin.Context, config *config.Config, email strin
 	}, nil
 }
 
-func (a *AuthService) Logout(ctx *gin.Context, config *config.Config) error {
+func (a *AuthService) Logout(ctx *gin.Context, app *app.Apps) error {
 	tokenString := ctx.GetHeader("Authorization")
 	if tokenString == "" {
 		return fmt.Errorf("Token is required")
@@ -60,7 +60,7 @@ func (a *AuthService) Logout(ctx *gin.Context, config *config.Config) error {
 		return fmt.Errorf("refresh token is required")
 	}
 
-	err := utils.RevokeToken(config, tokenString, req.RefreshToken)
+	err := utils.RevokeToken(app, tokenString, req.RefreshToken)
 	if err != nil {
 		return fmt.Errorf("Failed to revoke token")
 	}
@@ -68,14 +68,14 @@ func (a *AuthService) Logout(ctx *gin.Context, config *config.Config) error {
 	return nil
 }
 
-func (a *AuthService) GenerateAccessToken(ctx *gin.Context, config *config.Config) (AuthResponse, error) {
+func (a *AuthService) GenerateAccessToken(ctx *gin.Context, app *app.Apps) (AuthResponse, error) {
 	tokenString := ctx.GetHeader("Authorization")
 	if tokenString == "" {
 		return AuthResponse{}, fmt.Errorf("token is required")
 	}
 
 	// Parse the token
-	token, err := utils.ValidateToken(config, tokenString)
+	token, err := utils.ValidateToken(app, tokenString)
 	if err != nil {
 		return AuthResponse{}, fmt.Errorf("invalid refresh token: %w", err)
 	}
@@ -92,7 +92,7 @@ func (a *AuthService) GenerateAccessToken(ctx *gin.Context, config *config.Confi
 	if err := ctx.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
 		return AuthResponse{}, fmt.Errorf("refresh token is required")
 	}
-	newAccessToken, err := utils.RefreshAccessToken(config, req.RefreshToken)
+	newAccessToken, err := utils.RefreshAccessToken(app, req.RefreshToken)
 	if err != nil {
 		return AuthResponse{}, fmt.Errorf("failed to refresh token: %v", err)
 	}

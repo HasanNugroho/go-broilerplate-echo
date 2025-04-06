@@ -3,18 +3,18 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
+func AuthMiddleware(app *app.Apps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
 		// Parse the token
-		token, err := utils.ValidateToken(cfg, tokenString)
+		token, err := utils.ValidateToken(app, tokenString)
 
 		if err != nil || !token.Valid {
 			utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)

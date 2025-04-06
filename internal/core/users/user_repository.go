@@ -3,7 +3,7 @@ package users
 import (
 	"errors"
 
-	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/app"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
@@ -11,23 +11,23 @@ import (
 )
 
 type UserRepository struct {
-	db *config.DatabaseConfig
+	app *app.Apps
 }
 
-func NewUserRepository(config *config.Config) *UserRepository {
+func NewUserRepository(app *app.Apps) *UserRepository {
 	return &UserRepository{
-		db: &config.DB,
+		app: app,
 	}
 }
 
 func (u *UserRepository) Create(ctx *gin.Context, user *User) error {
-	result := u.db.Client.Create(&user)
+	result := u.app.DB.Create(&user)
 	return result.Error
 }
 
 func (u *UserRepository) FindByEmail(ctx *gin.Context, email string) (User, error) {
 	var user User
-	result := u.db.Client.WithContext(ctx).Where("email = ?", email).First(&user)
+	result := u.app.DB.WithContext(ctx).Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return User{}, nil
@@ -39,7 +39,7 @@ func (u *UserRepository) FindByEmail(ctx *gin.Context, email string) (User, erro
 
 func (u *UserRepository) FindById(ctx *gin.Context, id string) (User, error) {
 	var user User
-	result := u.db.Client.WithContext(ctx).Where("id = ?", id).First(&user)
+	result := u.app.DB.WithContext(ctx).Where("id = ?", id).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return User{}, gorm.ErrRecordNotFound
@@ -53,7 +53,7 @@ func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 	var users []User
 	var totalItems int64
 
-	query := u.db.Client.WithContext(ctx)
+	query := u.app.DB.WithContext(ctx)
 
 	// Hitung total data sebelum pagination
 	if err := query.Model(&User{}).Count(&totalItems).Error; err != nil {
@@ -83,9 +83,9 @@ func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 }
 
 func (u *UserRepository) Update(ctx *gin.Context, id string, user *User) error {
-	return u.db.Client.Where("id = ?", id).Updates(user).Error
+	return u.app.DB.Where("id = ?", id).Updates(user).Error
 }
 
 func (u *UserRepository) Delete(ctx *gin.Context, id string) error {
-	return u.db.Client.Where("id", id).Delete(&User{}).Error
+	return u.app.DB.Where("id", id).Delete(&User{}).Error
 }

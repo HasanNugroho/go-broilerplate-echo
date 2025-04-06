@@ -24,10 +24,10 @@ func NewRouter(app *gin.Engine, config *config.Config, userHandler *users.UserHa
 	}
 }
 
-func (r *RouteConfig) SetupRoutes() {
-	v1 := r.App.Group("/api/v1")
+// func (r *RouteConfig) SetupRoutes() {
+// 	v1 := r.App.Group("/api/v1")
 
-	auth.RegisterAuthRoutes(v1, r.Config, r.AuthHandler)
+// 	auth.RegisterAuthRoutes(v1, r.Config, r.AuthHandler)
 
-	users.RegisterUserRoutes(v1, r.Config, r.UserHandler)
-}
+// 	users.RegisterUserRoutes(v1, r.Config, r.UserHandler)
+// }
