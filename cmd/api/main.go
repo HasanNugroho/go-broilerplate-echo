@@ -6,6 +6,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/internal"
+	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -30,6 +31,7 @@ func main() {
 	// Initialize configuration and other components
 	router := gin.Default()
 	apps := internal.AppsInit(router)
+	router.Use(middleware.ErrorHandler(apps))
 
 	loadSwagger(apps.Router, apps.Config)
 

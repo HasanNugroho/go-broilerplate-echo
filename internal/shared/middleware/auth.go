@@ -31,6 +31,6 @@ func AuthMiddleware(app *app.Apps) gin.HandlerFunc {
 			return
 		}
 
-		c.Next() // Proceed to the next handler if authorized
+		c.Next()
 	}
 }

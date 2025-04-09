@@ -27,7 +27,7 @@ func NewRoleHandler(rs IRoleService) *RoleHandler {
 // @Tags         roles
 // @Accept       json
 // @Produce      json
-// @Param        role  body  RoleModel  true  "role Data"
+// @Param        role  body  RoleUpdateModel  true  "role Data"
 // @Success      201  {object}  shared.Response
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response
@@ -35,7 +35,7 @@ func NewRoleHandler(rs IRoleService) *RoleHandler {
 // @Router       /roles [post]
 // @Security ApiKeyAuth
 func (c *RoleHandler) Create(ctx *gin.Context) {
-	var role RoleModel
+	var role RoleUpdateModel
 	ctx.Bind(&role)
 	validate := validator.New()
 
@@ -180,4 +180,66 @@ func (c *RoleHandler) Delete(ctx *gin.Context) {
 		return
 	}
 	utils.SendSuccess(ctx, 200, "role deleted successfully", nil)
+}
+
+// Assignrole godoc
+// @Summary      Assign an role
+// @Description  Assign an role
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        role  body  AssignRoleModel  true  "role Data"
+// @Success      201  {object}  shared.Response
+// @Failure      400  {object}  shared.Response
+// @Failure      404  {object}  shared.Response
+// @Failure      500  {object}  shared.Response
+// @Router       /roles/assign [post]
+// @Security ApiKeyAuth
+func (c *RoleHandler) AssignUser(ctx *gin.Context) {
+	var payload AssignRoleModel
+	ctx.Bind(&payload)
+	validate := validator.New()
+
+	if err := validate.Struct(payload); err != nil {
+		utils.SendError(ctx, 400, "Assign user failed", err.Error())
+		return
+	}
+
+	if err := c.roleService.AssignUser(ctx, &payload); err != nil {
+		utils.SendError(ctx, 400, "Assign user failed", err.Error())
+		return
+	}
+
+	utils.SendSuccess(ctx, 201, "Assign user successfully", nil)
+}
+
+// UnAssignrole godoc
+// @Summary      UnAssign an role
+// @Description  UnAssign an role
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        role  body  AssignRoleModel  true  "role Data"
+// @Success      201  {object}  shared.Response
+// @Failure      400  {object}  shared.Response
+// @Failure      404  {object}  shared.Response
+// @Failure      500  {object}  shared.Response
+// @Router       /roles/Unassign [post]
+// @Security ApiKeyAuth
+func (c *RoleHandler) UnAssignUser(ctx *gin.Context) {
+	var payload AssignRoleModel
+	ctx.Bind(&payload)
+	validate := validator.New()
+
+	if err := validate.Struct(payload); err != nil {
+		utils.SendError(ctx, 400, "UnAssign user failed", err.Error())
+		return
+	}
+
+	if err := c.roleService.UnassignUser(ctx, &payload); err != nil {
+		utils.SendError(ctx, 400, "UnAssign user failed", err.Error())
+		return
+	}
+
+	utils.SendSuccess(ctx, 201, "UnAssign user successfully", nil)
 }

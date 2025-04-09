@@ -11,13 +11,12 @@ import (
 )
 
 // createJWT generates a JWT token with a given expiration time
-func createJWT(secretKey string, payload interface{}, expiration time.Duration) (string, error) {
+func createJWT(secretKey string, payload map[string]interface{}, expiration time.Duration) (string, error) {
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"data": payload,
 		"exp":  time.Now().Add(expiration).Unix(),
 		"iat":  time.Now().Unix(),
 	})
-
 	return claims.SignedString([]byte(secretKey))
 }
 
@@ -48,7 +47,7 @@ func GenerateAuthToken(app *app.Apps, payload interface{}) (accessToken string, 
 		return "", "", fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	accessToken, err = createJWT(app.Config.Security.JWTSecretKey, parsedMap, time.Minute*time.Duration(app.Config.Security.JWTExpired))
+	accessToken, err = createJWT(app.Config.Security.JWTSecretKey, parsedMap, time.Hour*time.Duration(app.Config.Security.JWTExpired))
 	if err != nil {
 		return "", "", err
 	}

@@ -1,9 +1,15 @@
 package roles
 
 import (
+	"encoding/json"
+	"errors"
+
 	"github.com/HasanNugroho/starter-golang/internal/app"
+	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type RoleRepository struct {
@@ -16,30 +22,90 @@ func NewRoleRepository(app *app.Apps) *RoleRepository {
 	}
 }
 
-func (app *RoleRepository) Create(ctx *gin.Context, role *Role) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) Create(ctx *gin.Context, role *entities.Role) error {
+	result := r.app.DB.WithContext(ctx).Create(&role)
+	return result.Error
 }
 
-func (app *RoleRepository) FindById(ctx *gin.Context, id string) (Role, error) {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) FindById(ctx *gin.Context, id string) (RoleModel, error) {
+	var role entities.Role
+	result := r.app.DB.WithContext(ctx).Where("id = ?", id).First(&role)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return RoleModel{}, nil
+		}
+		return RoleModel{}, result.Error
+	}
+
+	var permission []string
+	err := json.Unmarshal([]byte(role.Permissions), &permission)
+	if err != nil {
+		return RoleModel{}, err
+	}
+
+	return RoleModel{
+		ID:          role.ID.String(),
+		Name:        role.Name,
+		Permissions: permission,
+	}, nil
 }
 
-func (app *RoleRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
+	var roles []entities.Role
+	var totalItems int64
+
+	query := r.app.DB.WithContext(ctx)
+
+	// Hitung total data sebelum pagination
+	if err := query.Model(&entities.Role{}).Count(&totalItems).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Query data dengan pagination
+	result := query.Scopes(utils.Paginate(filter)).
+		Select([]string{"id", "name", "permissions"}).
+		Find(&roles)
+	if result.Error != nil {
+		return nil, 0, result.Error
+	}
+
+	// Konversi ke response model
+	var roleModels []RoleModel
+	for _, role := range roles {
+		var permission []string
+		err := json.Unmarshal([]byte(role.Permissions), &permission)
+		if err != nil {
+			continue
+		}
+
+		roleModels = append(roleModels, RoleModel{
+			ID:          (role.ID).String(),
+			Name:        role.Name,
+			Permissions: permission,
+		})
+	}
+
+	return roleModels, int(totalItems), nil
 }
 
-func (app *RoleRepository) Update(ctx *gin.Context, id string, role *Role) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) Update(ctx *gin.Context, id string, role *entities.Role) error {
+	return r.app.DB.WithContext(ctx).Where("id = ?", id).Updates(role).Error
 }
 
-func (app *RoleRepository) Delete(ctx *gin.Context, id string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) Delete(ctx *gin.Context, id string) error {
+	return r.app.DB.WithContext(ctx).Where("id", id).Delete(&entities.Role{}).Error
 }
 
-func (app *RoleRepository) AssignUser(ctx *gin.Context, userId string, roleId string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) AssignUser(ctx *gin.Context, userId string, roleId string) error {
+	return r.app.DB.WithContext(ctx).Table("user_roles").Create(map[string]interface{}{
+		"user_id": userId,
+		"role_id": roleId,
+	}).Error
 }
 
-func (app *RoleRepository) UnassignUser(ctx *gin.Context, userId string, roleId string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleRepository) UnassignUser(ctx *gin.Context, userId string, roleId string) error {
+	return r.app.DB.WithContext(ctx).
+		Table("user_roles").
+		Where("user_id = ? AND role_id = ?", userId, roleId).
+		Delete(nil).Error
 }

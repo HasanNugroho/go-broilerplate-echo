@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
+	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
@@ -30,11 +32,25 @@ func (a *AuthService) Login(ctx *gin.Context, app *app.Apps, email string, passw
 		return AuthResponse{}, fmt.Errorf("Incorrect email or password")
 	}
 
-	payload := users.UserModelResponse{
-		ID:        (existingUser.ID).String(),
-		Email:     existingUser.Email,
-		Name:      existingUser.Name,
-		CreatedAt: existingUser.CreatedAt,
+	var allPermissions []string
+	for _, role := range existingUser.Roles {
+
+		var perms []string
+		err := json.Unmarshal([]byte(role.Permissions), &perms)
+		if err != nil {
+			panic(err)
+		}
+
+		allPermissions = append(allPermissions, perms...)
+	}
+
+	payload := map[string]interface{}{
+		"id":         (existingUser.ID).String(),
+		"email":      existingUser.Email,
+		"name":       existingUser.Name,
+		"created_at": existingUser.CreatedAt,
+		"permission": allPermissions,
+		"roles":      existingUser.Roles,
 	}
 
 	accessToken, refreshToken, err := utils.GenerateAuthToken(app, payload)
@@ -47,6 +63,29 @@ func (a *AuthService) Login(ctx *gin.Context, app *app.Apps, email string, passw
 		RefreshToken: refreshToken,
 		Data:         payload,
 	}, nil
+}
+
+func (a *AuthService) Register(ctx *gin.Context, app *app.Apps, user *users.UserCreateModel) error {
+	existingUser, err := a.repo.FindByEmail(ctx, user.Email)
+	if err != nil || existingUser.Email != "" {
+		return fmt.Errorf("Incorrect email or password")
+	}
+
+	password, err := utils.HashPassword([]byte(user.Password))
+	if err != nil {
+		return err
+	}
+
+	payload := entities.User{
+		Email:    user.Email,
+		Name:     user.Name,
+		Password: password,
+	}
+
+	if err = a.repo.Create(ctx, &payload); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *AuthService) Logout(ctx *gin.Context, app *app.Apps) error {

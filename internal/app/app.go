@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/HasanNugroho/starter-golang/config"
+	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
@@ -17,6 +18,7 @@ type Apps struct {
 	Log      *zerolog.Logger
 	Redis    *redis.Client
 	DB       *gorm.DB
+	Bus      *modules.EventBus
 	Router   *gin.Engine
 	Features []Feature
 }

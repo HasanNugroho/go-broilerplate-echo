@@ -15,15 +15,16 @@ var GlobalConfig Config
 
 // Config menyimpan semua konfigurasi aplikasi
 type Config struct {
-	AppName  string                      `mapstructure:"APP_NAME"`
-	Version  string                      `mapstructure:"VERSION"`
-	AppEnv   string                      `mapstructure:"APP_ENV"`
-	Server   ServerConfig                `mapstructure:",squash"`
-	DB       DatabaseConfig              `mapstructure:",squash"`
-	Redis    RedisConfig                 `mapstructure:",squash"`
-	Security SecurityConfig              `mapstructure:",squash"`
-	Logger   LoggerConfig                `mapstructure:",squash"`
-	Search   modules.ElasticSearchConfig `mapstructure:",squash"`
+	AppName           string                      `mapstructure:"APP_NAME"`
+	Version           string                      `mapstructure:"VERSION"`
+	AppEnv            string                      `mapstructure:"APP_ENV"`
+	Server            ServerConfig                `mapstructure:",squash"`
+	DB                DatabaseConfig              `mapstructure:",squash"`
+	Redis             RedisConfig                 `mapstructure:",squash"`
+	Security          SecurityConfig              `mapstructure:",squash"`
+	Logger            LoggerConfig                `mapstructure:",squash"`
+	Search            modules.ElasticSearchConfig `mapstructure:",squash"`
+	ModulePermissions []string
 }
 
 // ServerConfig menyimpan konfigurasi server

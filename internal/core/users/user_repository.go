@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
+	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
@@ -20,43 +21,46 @@ func NewUserRepository(app *app.Apps) *UserRepository {
 	}
 }
 
-func (u *UserRepository) Create(ctx *gin.Context, user *User) error {
+func (u *UserRepository) Create(ctx *gin.Context, user *entities.User) error {
 	result := u.app.DB.Create(&user)
 	return result.Error
 }
 
-func (u *UserRepository) FindByEmail(ctx *gin.Context, email string) (User, error) {
-	var user User
-	result := u.app.DB.WithContext(ctx).Where("email = ?", email).First(&user)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return User{}, nil
+func (u *UserRepository) FindByEmail(ctx *gin.Context, email string) (entities.User, error) {
+	var user entities.User
+	err := u.app.DB.WithContext(ctx).
+		Preload("Roles").
+		Where("email = ?", email).
+		First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities.User{}, nil
 		}
-		return User{}, result.Error
+		return entities.User{}, err
 	}
 	return user, nil
 }
 
-func (u *UserRepository) FindById(ctx *gin.Context, id string) (User, error) {
-	var user User
+func (u *UserRepository) FindById(ctx *gin.Context, id string) (entities.User, error) {
+	var user entities.User
 	result := u.app.DB.WithContext(ctx).Where("id = ?", id).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return User{}, gorm.ErrRecordNotFound
+			return entities.User{}, gorm.ErrRecordNotFound
 		}
-		return User{}, result.Error
+		return entities.User{}, result.Error
 	}
 	return user, nil
 }
 
 func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]UserModelResponse, int, error) {
-	var users []User
+	var users []entities.User
 	var totalItems int64
 
 	query := u.app.DB.WithContext(ctx)
 
 	// Hitung total data sebelum pagination
-	if err := query.Model(&User{}).Count(&totalItems).Error; err != nil {
+	if err := query.Model(&entities.User{}).Count(&totalItems).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -82,10 +86,10 @@ func (u *UserRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 	return userModels, int(totalItems), nil
 }
 
-func (u *UserRepository) Update(ctx *gin.Context, id string, user *User) error {
-	return u.app.DB.Where("id = ?", id).Updates(user).Error
+func (u *UserRepository) Update(ctx *gin.Context, id string, user *entities.User) error {
+	return u.app.DB.WithContext(ctx).Where("id = ?", id).Updates(user).Error
 }
 
 func (u *UserRepository) Delete(ctx *gin.Context, id string) error {
-	return u.app.DB.Where("id", id).Delete(&User{}).Error
+	return u.app.DB.WithContext(ctx).Where("id", id).Delete(&entities.User{}).Error
 }
