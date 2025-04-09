@@ -3,7 +3,7 @@ package roles
 import (
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 type RoleModule struct {
@@ -37,16 +37,17 @@ func (u *RoleModule) Register(app *app.Apps) error {
 	return nil
 }
 
-func (a *RoleModule) Route(router *gin.RouterGroup, app *app.Apps) {
+func (a *RoleModule) Route(router *echo.Group, app *app.Apps) {
 	route := router.Group("/v1/roles")
 	{
 		route.Use(middleware.AuthMiddleware(app))
-		route.POST("", middleware.CheckAccess([]string{"roles:create"}), a.Handler.Create)
-		route.GET("", middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}), a.Handler.FindAll)
-		route.GET(":id", middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}), a.Handler.FindById)
-		route.PUT(":id", middleware.CheckAccess([]string{"roles:update"}), a.Handler.Update)
-		route.DELETE(":id", middleware.CheckAccess([]string{"roles:delete"}), a.Handler.Delete)
-		route.POST("/assign", middleware.CheckAccess([]string{"roles:assign"}), a.Handler.AssignUser)
-		route.POST("/unassign", middleware.CheckAccess([]string{"roles:unassign"}), a.Handler.AssignUser)
+		route.POST("", a.Handler.Create, middleware.CheckAccess([]string{"roles:create"}))
+		route.GET("", a.Handler.FindAll, middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}))
+		route.GET("/:id", a.Handler.FindById, middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}))
+		route.PUT("/:id", a.Handler.Update, middleware.CheckAccess([]string{"roles:update"}))
+		route.DELETE("/:id", a.Handler.Delete, middleware.CheckAccess([]string{"roles:delete"}))
+		route.POST("/assign", a.Handler.AssignUser, middleware.CheckAccess([]string{"roles:assign"}))
+		route.POST("/unassign", a.Handler.UnAssignUser, middleware.CheckAccess([]string{"roles:unassign"}))
+
 	}
 }

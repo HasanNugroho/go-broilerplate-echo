@@ -1,9 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server celler server.",
-        "title": "Example Rest API",
-        "contact": {},
+        "description": "This is a sample server.",
+        "title": "Starter Golang API",
+        "contact": {
+            "name": "API Support",
+            "email": "support@example.com"
+        },
         "version": "1.0"
     },
     "host": "localhost:7000",
@@ -391,14 +394,14 @@
                 }
             }
         },
-        "/roles/Unassign": {
+        "/roles/assign": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "UnAssign an role",
+                "description": "Assign an role",
                 "consumes": [
                     "application/json"
                 ],
@@ -408,7 +411,7 @@
                 "tags": [
                     "roles"
                 ],
-                "summary": "UnAssign an role",
+                "summary": "Assign an role",
                 "parameters": [
                     {
                         "description": "role Data",
@@ -448,14 +451,14 @@
                 }
             }
         },
-        "/roles/assign": {
+        "/roles/unassign": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Assign an role",
+                "description": "UnAssign an role",
                 "consumes": [
                     "application/json"
                 ],
@@ -465,7 +468,7 @@
                 "tags": [
                     "roles"
                 ],
-                "summary": "Assign an role",
+                "summary": "UnAssign an role",
                 "parameters": [
                     {
                         "description": "role Data",

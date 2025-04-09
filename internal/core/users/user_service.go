@@ -7,7 +7,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
@@ -21,7 +21,7 @@ func NewUserService(repo IUserRepository) *UserService {
 	}
 }
 
-func (u *UserService) Create(ctx *gin.Context, user *UserCreateModel) error {
+func (u *UserService) Create(ctx echo.Context, user *UserCreateModel) error {
 	existingUser, err := u.repo.FindByEmail(ctx, user.Email)
 
 	if err != nil {
@@ -49,7 +49,7 @@ func (u *UserService) Create(ctx *gin.Context, user *UserCreateModel) error {
 	return nil
 }
 
-func (u *UserService) FindById(ctx *gin.Context, id string) (UserModel, error) {
+func (u *UserService) FindById(ctx echo.Context, id string) (UserModel, error) {
 	user, err := u.repo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -67,7 +67,7 @@ func (u *UserService) FindById(ctx *gin.Context, id string) (UserModel, error) {
 	}, nil
 }
 
-func (u *UserService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
+func (u *UserService) FindAll(ctx echo.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
 	users, totalItems, err := u.repo.FindAll(ctx, filter)
 	if err != nil {
 		return shared.DataWithPagination{}, err
@@ -85,7 +85,7 @@ func (u *UserService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter)
 	return result, nil
 }
 
-func (u *UserService) Update(ctx *gin.Context, id string, user *UserUpdateModel) error {
+func (u *UserService) Update(ctx echo.Context, id string, user *UserUpdateModel) error {
 	existingUser, err := u.repo.FindById(ctx, id)
 	if err != nil {
 		return fmt.Errorf("user with ID %s not found: %w", id, err)
@@ -112,7 +112,7 @@ func (u *UserService) Update(ctx *gin.Context, id string, user *UserUpdateModel)
 	return nil
 }
 
-func (u *UserService) Delete(ctx *gin.Context, id string) error {
+func (u *UserService) Delete(ctx echo.Context, id string) error {
 	if _, err := u.repo.FindById(ctx, id); err != nil {
 		return fmt.Errorf("user with ID %s not found: %w", id, err)
 	}

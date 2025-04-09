@@ -2,23 +2,23 @@ package middleware
 
 import (
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
-func SetCORS(config *config.Config) gin.HandlerFunc {
+func SetCORS(config *config.Config) echo.MiddlewareFunc {
 	allowOrigins := config.Server.AllowedOrigins
 	if len(allowOrigins) == 0 {
 		allowOrigins = []string{"*"}
 	}
 
-	corsConfig := cors.Config{
+	corsConfig := middleware.CORSConfig{
 		AllowOrigins:     allowOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowMethods:     []string{echo.GET, echo.POST, echo.PUT, echo.DELETE, echo.OPTIONS, echo.PATCH},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type", "Origin", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}
 
-	return cors.New(corsConfig)
+	return middleware.CORSWithConfig(corsConfig)
 }

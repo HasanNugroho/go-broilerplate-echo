@@ -4,7 +4,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 type AuthModule struct {
@@ -25,7 +25,7 @@ func (u *AuthModule) Register(app *app.Apps) error {
 	return nil
 }
 
-func (a *AuthModule) Route(router *gin.RouterGroup, app *app.Apps) {
+func (a *AuthModule) Route(router *echo.Group, app *app.Apps) {
 	authRoutes := router.Group("/v1/auth")
 	{
 		authRoutes.POST("/login", a.Handler.Login)

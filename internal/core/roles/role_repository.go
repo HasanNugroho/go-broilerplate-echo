@@ -8,7 +8,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
@@ -22,14 +22,14 @@ func NewRoleRepository(app *app.Apps) *RoleRepository {
 	}
 }
 
-func (r *RoleRepository) Create(ctx *gin.Context, role *entities.Role) error {
-	result := r.app.DB.WithContext(ctx).Create(&role)
+func (r *RoleRepository) Create(ctx echo.Context, role *entities.Role) error {
+	result := r.app.DB.WithContext(ctx.Request().Context()).Create(&role)
 	return result.Error
 }
 
-func (r *RoleRepository) FindById(ctx *gin.Context, id string) (RoleModel, error) {
+func (r *RoleRepository) FindById(ctx echo.Context, id string) (RoleModel, error) {
 	var role entities.Role
-	result := r.app.DB.WithContext(ctx).Where("id = ?", id).First(&role)
+	result := r.app.DB.WithContext(ctx.Request().Context()).Where("id = ?", id).First(&role)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return RoleModel{}, nil
@@ -50,11 +50,11 @@ func (r *RoleRepository) FindById(ctx *gin.Context, id string) (RoleModel, error
 	}, nil
 }
 
-func (r *RoleRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
+func (r *RoleRepository) FindAll(ctx echo.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
 	var roles []entities.Role
 	var totalItems int64
 
-	query := r.app.DB.WithContext(ctx)
+	query := r.app.DB.WithContext(ctx.Request().Context())
 
 	// Hitung total data sebelum pagination
 	if err := query.Model(&entities.Role{}).Count(&totalItems).Error; err != nil {
@@ -88,23 +88,23 @@ func (r *RoleRepository) FindAll(ctx *gin.Context, filter *shared.PaginationFilt
 	return roleModels, int(totalItems), nil
 }
 
-func (r *RoleRepository) Update(ctx *gin.Context, id string, role *entities.Role) error {
-	return r.app.DB.WithContext(ctx).Where("id = ?", id).Updates(role).Error
+func (r *RoleRepository) Update(ctx echo.Context, id string, role *entities.Role) error {
+	return r.app.DB.WithContext(ctx.Request().Context()).Where("id = ?", id).Updates(role).Error
 }
 
-func (r *RoleRepository) Delete(ctx *gin.Context, id string) error {
-	return r.app.DB.WithContext(ctx).Where("id", id).Delete(&entities.Role{}).Error
+func (r *RoleRepository) Delete(ctx echo.Context, id string) error {
+	return r.app.DB.WithContext(ctx.Request().Context()).Where("id", id).Delete(&entities.Role{}).Error
 }
 
-func (r *RoleRepository) AssignUser(ctx *gin.Context, userId string, roleId string) error {
-	return r.app.DB.WithContext(ctx).Table("user_roles").Create(map[string]interface{}{
+func (r *RoleRepository) AssignUser(ctx echo.Context, userId string, roleId string) error {
+	return r.app.DB.WithContext(ctx.Request().Context()).Table("user_roles").Create(map[string]interface{}{
 		"user_id": userId,
 		"role_id": roleId,
 	}).Error
 }
 
-func (r *RoleRepository) UnassignUser(ctx *gin.Context, userId string, roleId string) error {
-	return r.app.DB.WithContext(ctx).
+func (r *RoleRepository) UnassignUser(ctx echo.Context, userId string, roleId string) error {
+	return r.app.DB.WithContext(ctx.Request().Context()).
 		Table("user_roles").
 		Where("user_id = ? AND role_id = ?", userId, roleId).
 		Delete(nil).Error

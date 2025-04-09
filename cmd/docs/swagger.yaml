@@ -128,9 +128,11 @@ definitions:
     type: object
 host: localhost:7000
 info:
-  contact: {}
-  description: This is a sample server celler server.
-  title: Example Rest API
+  contact:
+    email: support@example.com
+    name: API Support
+  description: This is a sample server.
+  title: Starter Golang API
   version: "1.0"
 paths:
   /auth/access-token:
@@ -466,42 +468,6 @@ paths:
       summary: Update role
       tags:
       - roles
-  /roles/Unassign:
-    post:
-      consumes:
-      - application/json
-      description: UnAssign an role
-      parameters:
-      - description: role Data
-        in: body
-        name: role
-        required: true
-        schema:
-          $ref: '#/definitions/roles.AssignRoleModel'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/shared.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: UnAssign an role
-      tags:
-      - roles
   /roles/assign:
     post:
       consumes:
@@ -536,6 +502,42 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Assign an role
+      tags:
+      - roles
+  /roles/unassign:
+    post:
+      consumes:
+      - application/json
+      description: UnAssign an role
+      parameters:
+      - description: role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/roles.AssignRoleModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: UnAssign an role
       tags:
       - roles
   /users:

@@ -71,7 +71,7 @@ func GenerateAuthToken(app *app.Apps, payload interface{}) (accessToken string, 
 }
 
 // RefreshAccessToken validates refresh token and returns a new access token
-func RefreshAccessToken(app *app.Apps, refreshToken string) (string, error) {
+func RefreshAccessToken(app *app.Apps, refreshToken string, newPayload map[string]interface{}) (string, error) {
 	ctx := context.Background()
 
 	// Cek apakah token valid
@@ -82,12 +82,11 @@ func RefreshAccessToken(app *app.Apps, refreshToken string) (string, error) {
 
 	// Cek apakah refresh token sudah tidak berlaku
 	key := "refresh_token:" + refreshToken
-	userID, err := app.Redis.Get(ctx, key).Result()
+	_, err = app.Redis.Get(ctx, key).Result()
 	if err != nil {
 		return "", fmt.Errorf("refresh token not found or revoked")
 	}
 
-	newPayload := map[string]interface{}{"user_id": userID}
 	newAccessToken, err := createJWT(app.Config.Security.JWTSecretKey, newPayload, time.Minute*time.Duration(app.Config.Security.JWTExpired))
 	if err != nil {
 		return "", err

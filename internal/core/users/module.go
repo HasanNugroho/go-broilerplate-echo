@@ -3,7 +3,7 @@ package users
 import (
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 type UserModule struct {
@@ -36,14 +36,14 @@ func (u *UserModule) Register(app *app.Apps) error {
 	return nil
 }
 
-func (u *UserModule) Route(router *gin.RouterGroup, app *app.Apps) {
+func (u *UserModule) Route(router *echo.Group, app *app.Apps) {
 	userRoutes := router.Group("/v1/users")
 	userRoutes.Use(middleware.AuthMiddleware(app))
 	{
-		userRoutes.POST("/", middleware.CheckAccess([]string{"users:create"}), u.Handler.Create)
-		userRoutes.GET("/", middleware.CheckAccess([]string{"users:read"}), u.Handler.FindAll)
-		userRoutes.GET("/:id", middleware.CheckAccess([]string{"users:read"}), u.Handler.FindById)
-		userRoutes.PUT("/:id", middleware.CheckAccess([]string{"users:update"}), u.Handler.Update)
-		userRoutes.DELETE("/:id", middleware.CheckAccess([]string{"users:delete"}), u.Handler.Delete)
+		userRoutes.GET("/", u.Handler.FindAll, middleware.CheckAccess([]string{"users:read"}))
+		userRoutes.GET("/:id", u.Handler.FindById, middleware.CheckAccess([]string{"users:read"}))
+		userRoutes.PUT("/:id", u.Handler.Update, middleware.CheckAccess([]string{"users:update"}))
+		userRoutes.DELETE("/:id", u.Handler.Delete, middleware.CheckAccess([]string{"users:delete"}))
+
 	}
 }

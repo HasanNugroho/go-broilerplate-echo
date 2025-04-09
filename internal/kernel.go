@@ -8,7 +8,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ var (
 	redisClient   *redis.Client
 )
 
-func AppsInit(router *gin.Engine) *app.Apps {
+func AppsInit(router *echo.Echo) *app.Apps {
 	// Initialize configuration
 	appConfig, err := config.LoadConfig()
 	if err != nil {
@@ -28,9 +28,9 @@ func AppsInit(router *gin.Engine) *app.Apps {
 	}
 
 	// Set production mode if applicable
-	if appConfig.AppEnv == ProductionEnv {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	// if appConfig.AppEnv == ProductionEnv {
+	// 	gin.SetMode(gin.ReleaseMode)
+	// }
 
 	// Initialize Logger
 	logApps := config.InitLogger(appConfig)
@@ -76,15 +76,7 @@ func AppsInit(router *gin.Engine) *app.Apps {
 	app.Router.Use(middleware.SetCORS(app.Config), middleware.SecurityMiddleware(app.Config))
 
 	// Initialize Rate Limiter if enabled
-	if app.Config.Security.RateLimit != "" {
-		limiter, err := middleware.InitRateLimiter(app.Config, app.Redis, app.Config.Security.RateLimit, app.Config.Security.TrustedPlatform)
-		if err != nil {
-			config.Logger.Fatal().Msg(err.Error())
-			panic(1)
-		}
-		app.Router.Use(middleware.RateLimit(limiter))
-
-	}
+	app.Router.Use(middleware.RateLimit(appConfig))
 
 	// Initialize modules
 	InitModules(app)

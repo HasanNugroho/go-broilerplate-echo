@@ -5,7 +5,7 @@ import (
 
 	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
@@ -19,13 +19,13 @@ type Apps struct {
 	Redis    *redis.Client
 	DB       *gorm.DB
 	Bus      *modules.EventBus
-	Router   *gin.Engine
+	Router   *echo.Echo
 	Features []Feature
 }
 
 type Feature interface {
 	Register(app *Apps) error
-	Route(router *gin.RouterGroup, app *Apps)
+	Route(router *echo.Group, app *Apps)
 }
 
 func (a *Apps) RegisterFeature(f Feature) {

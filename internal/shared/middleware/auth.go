@@ -5,32 +5,30 @@ import (
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 )
 
-func AuthMiddleware(app *app.Apps) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenString := c.GetHeader("Authorization")
+func AuthMiddleware(app *app.Apps) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			tokenString := c.Request().Header.Get("Authorization")
 
-		// Parse the token
-		token, err := utils.ValidateToken(app, tokenString)
+			token, err := utils.ValidateToken(app, tokenString)
+			if err != nil || !token.Valid {
+				utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
+				return err
 
-		if err != nil || !token.Valid {
-			utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-			c.Abort()
-			return
+			}
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				c.Set("claims", claims)
+			} else {
+				utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
+				return err
+			}
+
+			return next(c)
 		}
-
-		// Set the token claims to the context
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			c.Set("claims", claims)
-		} else {
-			utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-			c.Abort()
-			return
-		}
-
-		c.Next()
 	}
 }

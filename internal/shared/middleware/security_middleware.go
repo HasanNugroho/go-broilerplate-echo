@@ -1,27 +1,22 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/HasanNugroho/starter-golang/config"
-	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
-func SecurityMiddleware(config *config.Config) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.Request.Host != config.Security.ExpectedHost {
-			utils.SendError(c, http.StatusBadRequest, "Invalid host header", nil)
-			c.Abort()
-			return
-		}
-		c.Header("X-Frame-Options", config.Security.XFrameOptions)
-		c.Header("Content-Security-Policy", config.Security.ContentSecurity)
-		c.Header("X-XSS-Protection", config.Security.XXSSProtection)
-		c.Header("Strict-Transport-Security", config.Security.StrictTransport)
-		c.Header("Referrer-Policy", config.Security.ReferrerPolicy)
-		c.Header("X-Content-Type-Options", config.Security.XContentTypeOpts)
-		c.Header("Permissions-Policy", config.Security.PermissionsPolicy)
-		c.Next()
-	}
+func SecurityMiddleware(cfg *config.Config) echo.MiddlewareFunc {
+	return middleware.SecureWithConfig(middleware.SecureConfig{
+		Skipper:               middleware.DefaultSkipper,
+		XSSProtection:         cfg.Security.XXSSProtection,
+		ContentTypeNosniff:    cfg.Security.XContentTypeOpts,
+		XFrameOptions:         cfg.Security.XFrameOptions,
+		HSTSMaxAge:            63072000, // bisa disesuaikan atau ambil dari config
+		HSTSExcludeSubdomains: false,
+		HSTSPreloadEnabled:    true,
+		ContentSecurityPolicy: cfg.Security.ContentSecurity,
+		CSPReportOnly:         false,
+		ReferrerPolicy:        cfg.Security.ReferrerPolicy,
+	})
 }

@@ -6,8 +6,8 @@ import (
 
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +34,7 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Failure      500  {object}  shared.Response
 // @Router       /users [post]
 // @Security ApiKeyAuth
-func (c *UserHandler) Create(ctx *gin.Context) {
+func (c *UserHandler) Create(ctx echo.Context) {
 	var user UserCreateModel
 	ctx.Bind(&user)
 	validate := validator.New()
@@ -65,21 +65,23 @@ func (c *UserHandler) Create(ctx *gin.Context) {
 // @Failure      500     {object}  shared.Response
 // @Router       /users [get]
 // @Security ApiKeyAuth
-func (c *UserHandler) FindAll(ctx *gin.Context) {
+func (c *UserHandler) FindAll(ctx echo.Context) error {
 	var filter shared.PaginationFilter
 
 	// Binding query parameters
-	if err := ctx.ShouldBindQuery(&filter); err != nil {
+	if err := ctx.Bind(&filter); err != nil {
 		utils.SendError(ctx, 400, "failed to fetch users", err)
-		return
+		return err
 	}
 
 	users, err := c.userService.FindAll(ctx, &filter)
 	if err != nil {
 		utils.SendError(ctx, 400, "failed to fetch users", err)
-		return
+		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "users retrieved successfully", users)
+	return nil
 }
 
 // FindUser godoc
@@ -93,25 +95,26 @@ func (c *UserHandler) FindAll(ctx *gin.Context) {
 // @Failure      500     {object}  shared.Response
 // @Router       /users/{id} [get]
 // @Security ApiKeyAuth
-func (c *UserHandler) FindById(ctx *gin.Context) {
+func (c *UserHandler) FindById(ctx echo.Context) error {
 	id := ctx.Param("id")
 
 	validate := validator.New()
 	if err := validate.Var(id, "required,ulid"); err != nil {
 		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
-		return
+		return err
 	}
 
 	user, err := c.userService.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			utils.SendError(ctx, 404, fmt.Sprintf("User with ID %s not found", id), err.Error())
-			return
+			return err
 		}
 		utils.SendError(ctx, 500, "Failed to fetch user", err.Error())
-		return
+		return err
 	}
 	utils.SendSuccess(ctx, 200, "User retrieved successfully", user)
+	return nil
 }
 
 // UpdateUser godoc
@@ -128,7 +131,7 @@ func (c *UserHandler) FindById(ctx *gin.Context) {
 // @Failure      500  {object}  shared.Response
 // @Router       /users/{id} [put]
 // @Security ApiKeyAuth
-func (c *UserHandler) Update(ctx *gin.Context) {
+func (c *UserHandler) Update(ctx echo.Context) error {
 	id := ctx.Param("id")
 	var user UserUpdateModel
 	validate := validator.New()
@@ -137,20 +140,21 @@ func (c *UserHandler) Update(ctx *gin.Context) {
 
 	if err := validate.Var(id, "required,ulid"); err != nil {
 		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
-		return
+		return err
 	}
 
 	if err := validate.Struct(user); err != nil {
 		utils.SendError(ctx, 400, "Bad request", err.Error())
-		return
+		return err
 	}
 
 	if err := c.userService.Update(ctx, id, &user); err != nil {
 		utils.SendError(ctx, 400, "create data failed", err)
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, 201, "users updated successfully", nil)
+	return nil
 }
 
 // DeleteUser godoc
@@ -164,20 +168,21 @@ func (c *UserHandler) Update(ctx *gin.Context) {
 // @Failure      500     {object}  shared.Response
 // @Router       /users/{id} [delete]
 // @Security ApiKeyAuth
-func (c *UserHandler) Delete(ctx *gin.Context) {
+func (c *UserHandler) Delete(ctx echo.Context) error {
 	id := ctx.Param("id")
 
 	validate := validator.New()
 
 	if err := validate.Var(id, "required,ulid"); err != nil {
 		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
-		return
+		return err
 	}
 
 	err := c.userService.Delete(ctx, id)
 	if err != nil {
 		utils.SendError(ctx, 400, "failed to delete user", err)
-		return
+		return err
 	}
 	utils.SendSuccess(ctx, 200, "user deleted successfully", nil)
+	return nil
 }

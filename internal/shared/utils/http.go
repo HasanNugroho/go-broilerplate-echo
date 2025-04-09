@@ -2,11 +2,11 @@ package utils
 
 import (
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 )
 
 // SendSuccess mengirim response sukses
-func SendSuccess(c *gin.Context, statusCode int, message string, data interface{}) {
+func SendSuccess(c echo.Context, statusCode int, message string, data interface{}) {
 	c.JSON(statusCode, shared.Response{
 		Status:  statusCode,
 		Message: message,
@@ -15,7 +15,7 @@ func SendSuccess(c *gin.Context, statusCode int, message string, data interface{
 }
 
 // SendError mengirim response error
-func SendError(c *gin.Context, statusCode int, message string, err interface{}) {
+func SendError(c echo.Context, statusCode int, message string, err interface{}) {
 	c.JSON(statusCode, shared.Response{
 		Status:  statusCode,
 		Message: message,
@@ -23,7 +23,7 @@ func SendError(c *gin.Context, statusCode int, message string, err interface{}) 
 	})
 }
 
-// func SendPagination(c *gin.Context, status int, message string, items interface{}, page, limit, totalItems int, err interface{}) {
+// func SendPagination(c echo.Context, status int, message string, items interface{}, page, limit, totalItems int, err interface{}) {
 // 	if limit < 1 {
 // 		limit = 10
 // 	}

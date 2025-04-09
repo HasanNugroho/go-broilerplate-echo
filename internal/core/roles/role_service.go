@@ -9,7 +9,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ func NewRoleService(app *app.Apps, repo IRoleRepository) *RoleService {
 	}
 }
 
-func (r *RoleService) Create(ctx *gin.Context, user *RoleUpdateModel) error {
+func (r *RoleService) Create(ctx echo.Context, user *RoleUpdateModel) error {
 	if len(utils.Intersection(user.Permissions, r.app.Config.ModulePermissions)) < 1 {
 		return fmt.Errorf("permissions not found")
 	}
@@ -42,7 +42,7 @@ func (r *RoleService) Create(ctx *gin.Context, user *RoleUpdateModel) error {
 	return nil
 }
 
-func (r *RoleService) FindById(ctx *gin.Context, id string) (RoleModel, error) {
+func (r *RoleService) FindById(ctx echo.Context, id string) (RoleModel, error) {
 	role, err := r.repo.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -53,7 +53,7 @@ func (r *RoleService) FindById(ctx *gin.Context, id string) (RoleModel, error) {
 	return role, nil
 }
 
-func (r *RoleService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
+func (r *RoleService) FindAll(ctx echo.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
 	users, totalItems, err := r.repo.FindAll(ctx, filter)
 	if err != nil {
 		return shared.DataWithPagination{}, err
@@ -71,7 +71,7 @@ func (r *RoleService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter)
 	return result, nil
 }
 
-func (r *RoleService) Update(ctx *gin.Context, id string, role *RoleUpdateModel) error {
+func (r *RoleService) Update(ctx echo.Context, id string, role *RoleUpdateModel) error {
 	currentRole, err := r.repo.FindById(ctx, id)
 	if err != nil {
 		return fmt.Errorf("role with ID %s not found: %w", id, err)
@@ -99,7 +99,7 @@ func (r *RoleService) Update(ctx *gin.Context, id string, role *RoleUpdateModel)
 	return r.repo.Update(ctx, id, &updatedRole)
 }
 
-func (r *RoleService) Delete(ctx *gin.Context, id string) error {
+func (r *RoleService) Delete(ctx echo.Context, id string) error {
 	if _, err := r.repo.FindById(ctx, id); err != nil {
 		return fmt.Errorf("user with ID %s not found: %w", id, err)
 	}
@@ -111,7 +111,7 @@ func (r *RoleService) Delete(ctx *gin.Context, id string) error {
 	return nil
 }
 
-func (r *RoleService) AssignUser(ctx *gin.Context, payload *AssignRoleModel) error {
+func (r *RoleService) AssignUser(ctx echo.Context, payload *AssignRoleModel) error {
 	err := r.repo.AssignUser(ctx, payload.UserID, payload.RoleID)
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (r *RoleService) AssignUser(ctx *gin.Context, payload *AssignRoleModel) err
 	return nil
 }
 
-func (r *RoleService) UnassignUser(ctx *gin.Context, payload *AssignRoleModel) error {
+func (r *RoleService) UnassignUser(ctx echo.Context, payload *AssignRoleModel) error {
 	err := r.repo.UnassignUser(ctx, payload.UserID, payload.RoleID)
 	if err != nil {
 		return err

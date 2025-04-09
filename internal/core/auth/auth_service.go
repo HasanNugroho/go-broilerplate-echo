@@ -3,13 +3,14 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 )
 
 type AuthService struct {
@@ -22,7 +23,7 @@ func NewAuthService(repo users.IUserRepository) *AuthService {
 	}
 }
 
-func (a *AuthService) Login(ctx *gin.Context, app *app.Apps, email string, password string) (AuthResponse, error) {
+func (a *AuthService) Login(ctx echo.Context, app *app.Apps, email string, password string) (AuthResponse, error) {
 	existingUser, err := a.repo.FindByEmail(ctx, email)
 	if err != nil || existingUser.Email == "" {
 		return AuthResponse{}, fmt.Errorf("Incorrect email or password")
@@ -65,7 +66,7 @@ func (a *AuthService) Login(ctx *gin.Context, app *app.Apps, email string, passw
 	}, nil
 }
 
-func (a *AuthService) Register(ctx *gin.Context, app *app.Apps, user *users.UserCreateModel) error {
+func (a *AuthService) Register(ctx echo.Context, app *app.Apps, user *users.UserCreateModel) error {
 	existingUser, err := a.repo.FindByEmail(ctx, user.Email)
 	if err != nil || existingUser.Email != "" {
 		return fmt.Errorf("Incorrect email or password")
@@ -88,14 +89,14 @@ func (a *AuthService) Register(ctx *gin.Context, app *app.Apps, user *users.User
 	return nil
 }
 
-func (a *AuthService) Logout(ctx *gin.Context, app *app.Apps) error {
-	tokenString := ctx.GetHeader("Authorization")
+func (a *AuthService) Logout(ctx echo.Context, app *app.Apps) error {
+	tokenString := ctx.Request().Header.Get("Authorization")
 	if tokenString == "" {
 		return fmt.Errorf("Token is required")
 	}
 
 	var req LogoutRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
+	if err := ctx.Bind(&req); err != nil || req.RefreshToken == "" {
 		return fmt.Errorf("refresh token is required")
 	}
 
@@ -107,37 +108,73 @@ func (a *AuthService) Logout(ctx *gin.Context, app *app.Apps) error {
 	return nil
 }
 
-func (a *AuthService) GenerateAccessToken(ctx *gin.Context, app *app.Apps) (AuthResponse, error) {
-	tokenString := ctx.GetHeader("Authorization")
-	if tokenString == "" {
-		return AuthResponse{}, fmt.Errorf("token is required")
+func (a *AuthService) GenerateAccessToken(ctx echo.Context, app *app.Apps) (AuthResponse, error) {
+	tokenString := ctx.Request().Header.Get("Authorization")
+	token, err := utils.ValidateToken(app, tokenString)
+	if err != nil || token == nil || !token.Valid {
+		return AuthResponse{}, fmt.Errorf("invalid or expired access token: %w", err)
 	}
 
-	// Parse the token
-	token, err := utils.ValidateToken(app, tokenString)
-	if err != nil {
-		return AuthResponse{}, fmt.Errorf("invalid refresh token: %w", err)
+	// Get and validate Authorization header (old access token)
+	claimsRaw := ctx.Get("claims")
+	if claimsRaw == nil {
+		return AuthResponse{}, fmt.Errorf("No claims found")
 	}
-	claims, ok := token.Claims.(jwt.MapClaims)
+
+	claims, ok := claimsRaw.(jwt.MapClaims)
 	if !ok {
-		return AuthResponse{}, fmt.Errorf("cannot parse claims")
+		return AuthResponse{}, fmt.Errorf("Invalid claims format")
 	}
+
 	data, ok := claims["data"].(map[string]interface{})
 	if !ok {
-		return AuthResponse{}, fmt.Errorf("data claim not found or invalid format")
+		utils.SendError(ctx, http.StatusForbidden, "Invalid data in claims", nil)
 	}
 
+	userID, ok := data["id"].(string)
+	if !ok {
+		return AuthResponse{}, fmt.Errorf("invalid or missing user ID in token")
+	}
+
+	existingUser, err := a.repo.FindById(ctx, userID)
+
+	app.Log.Info().Msgf("User ID from token: %s", existingUser)
+	if err != nil || existingUser.Email == "" {
+		return AuthResponse{}, fmt.Errorf("user not found")
+	}
+
+	// Aggregate permissions
+	var allPermissions []string
+	for _, role := range existingUser.Roles {
+		var perms []string
+		if err := json.Unmarshal([]byte(role.Permissions), &perms); err != nil {
+			return AuthResponse{}, fmt.Errorf("failed to parse permissions: %w", err)
+		}
+		allPermissions = append(allPermissions, perms...)
+	}
+
+	// Parse refresh token from request body
 	var req LogoutRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil || req.RefreshToken == "" {
+	if err := ctx.Bind(&req); err != nil || req.RefreshToken == "" {
 		return AuthResponse{}, fmt.Errorf("refresh token is required")
 	}
-	newAccessToken, err := utils.RefreshAccessToken(app, req.RefreshToken)
-	if err != nil {
-		return AuthResponse{}, fmt.Errorf("failed to refresh token: %v", err)
+
+	newPayload := map[string]interface{}{
+		"id":          userID,
+		"email":       existingUser.Email,
+		"name":        existingUser.Name,
+		"permissions": allPermissions,
 	}
+
+	// Generate new access token
+	newAccessToken, err := utils.RefreshAccessToken(app, req.RefreshToken, newPayload)
+	if err != nil {
+		return AuthResponse{}, fmt.Errorf("failed to refresh token: %w", err)
+	}
+
 	return AuthResponse{
 		Token:        newAccessToken,
 		RefreshToken: req.RefreshToken,
-		Data:         data,
+		Data:         newPayload,
 	}, nil
 }

@@ -9,7 +9,10 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "API Support",
+            "email": "support@example.com"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -397,14 +400,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/roles/Unassign": {
+        "/roles/assign": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "UnAssign an role",
+                "description": "Assign an role",
                 "consumes": [
                     "application/json"
                 ],
@@ -414,7 +417,7 @@ const docTemplate = `{
                 "tags": [
                     "roles"
                 ],
-                "summary": "UnAssign an role",
+                "summary": "Assign an role",
                 "parameters": [
                     {
                         "description": "role Data",
@@ -454,14 +457,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/roles/assign": {
+        "/roles/unassign": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Assign an role",
+                "description": "UnAssign an role",
                 "consumes": [
                     "application/json"
                 ],
@@ -471,7 +474,7 @@ const docTemplate = `{
                 "tags": [
                     "roles"
                 ],
-                "summary": "Assign an role",
+                "summary": "UnAssign an role",
                 "parameters": [
                     {
                         "description": "role Data",
@@ -1176,8 +1179,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:7000",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Example Rest API",
-	Description:      "This is a sample server celler server.",
+	Title:            "Starter Golang API",
+	Description:      "This is a sample server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

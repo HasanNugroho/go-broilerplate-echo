@@ -6,8 +6,8 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/labstack/echo/v4"
 )
 
 type AuthHandler struct {
@@ -34,26 +34,27 @@ func NewAuthHandler(us IAuthService, app *app.Apps) *AuthHandler {
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
 // @Router       /auth/register [post]
-func (c *AuthHandler) Register(ctx *gin.Context) {
+func (c *AuthHandler) Register(ctx echo.Context) error {
 	var user users.UserCreateModel
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	if err := ctx.Bind(&user); err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Failed to process request", "Invalid data format")
-		return
+		return err
 	}
 
 	validate := validator.New()
 	if err := validate.Struct(user); err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Validation failed", err.Error())
-		return
+		return err
 	}
 
 	err := c.authService.Register(ctx, c.app, &user)
 	if err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, err.Error(), nil)
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, http.StatusOK, "Register successful", nil)
+	return nil
 }
 
 // Login godoc
@@ -68,26 +69,27 @@ func (c *AuthHandler) Register(ctx *gin.Context) {
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
 // @Router       /auth/login [post]
-func (c *AuthHandler) Login(ctx *gin.Context) {
+func (c *AuthHandler) Login(ctx echo.Context) error {
 	var user AuthModel
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	if err := ctx.Bind(&user); err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Failed to process request", "Invalid data format")
-		return
+		return err
 	}
 
 	validate := validator.New()
 	if err := validate.Struct(user); err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Validation failed", err.Error())
-		return
+		return err
 	}
 
 	token, err := c.authService.Login(ctx, c.app, user.Email, user.Password)
 	if err != nil {
 		utils.SendError(ctx, http.StatusUnauthorized, "Login failed", err.Error())
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, http.StatusOK, "Login successful", token)
+	return nil
 }
 
 // Logout godoc
@@ -103,14 +105,15 @@ func (c *AuthHandler) Login(ctx *gin.Context) {
 // @Failure      500  {object}  shared.Response
 // @Router       /auth/logout [post]
 // @Security ApiKeyAuth
-func (c *AuthHandler) Logout(ctx *gin.Context) {
+func (c *AuthHandler) Logout(ctx echo.Context) error {
 	err := c.authService.Logout(ctx, c.app)
 	if err != nil {
 		utils.SendError(ctx, http.StatusUnauthorized, "Logout failed", err.Error())
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, http.StatusOK, "Logout successful", nil)
+	return nil
 }
 
 // Renew token godoc
@@ -126,12 +129,13 @@ func (c *AuthHandler) Logout(ctx *gin.Context) {
 // @Failure      500  {object}  shared.Response
 // @Router       /auth/access-token [post]
 // @Security ApiKeyAuth
-func (c *AuthHandler) GenerateAccessToken(ctx *gin.Context) {
+func (c *AuthHandler) GenerateAccessToken(ctx echo.Context) error {
 	token, err := c.authService.GenerateAccessToken(ctx, c.app)
 	if err != nil {
 		utils.SendError(ctx, http.StatusBadRequest, "Renew token failed", err.Error())
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, http.StatusOK, "Renew token successfully", token)
+	return nil
 }
