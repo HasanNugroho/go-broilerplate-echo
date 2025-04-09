@@ -24,6 +24,13 @@ definitions:
         example: your-refresh-token
         type: string
     type: object
+  roles.AssignRoleModel:
+    properties:
+      role_id:
+        type: string
+      user_id:
+        type: string
+    type: object
   roles.RoleModel:
     properties:
       id:
@@ -31,14 +38,18 @@ definitions:
       name:
         type: string
       permission:
-        type: string
+        items:
+          type: string
+        type: array
     type: object
   roles.RoleUpdateModel:
     properties:
       name:
         type: string
       permission:
-        type: string
+        items:
+          type: string
+        type: array
     type: object
   shared.DataWithPagination:
     properties:
@@ -233,6 +244,45 @@ paths:
       summary: Logout
       tags:
       - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register an user
+      parameters:
+      - description: User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/users.UserCreateModel'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/shared.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/users.UserCreateModel'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      summary: Register
+      tags:
+      - auth
   /roles:
     get:
       consumes:
@@ -293,7 +343,7 @@ paths:
         name: role
         required: true
         schema:
-          $ref: '#/definitions/roles.RoleModel'
+          $ref: '#/definitions/roles.RoleUpdateModel'
       produces:
       - application/json
       responses:
@@ -414,6 +464,78 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Update role
+      tags:
+      - roles
+  /roles/Unassign:
+    post:
+      consumes:
+      - application/json
+      description: UnAssign an role
+      parameters:
+      - description: role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/roles.AssignRoleModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: UnAssign an role
+      tags:
+      - roles
+  /roles/assign:
+    post:
+      consumes:
+      - application/json
+      description: Assign an role
+      parameters:
+      - description: role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/roles.AssignRoleModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Assign an role
       tags:
       - roles
   /users:

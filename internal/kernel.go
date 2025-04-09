@@ -7,6 +7,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/core/roles"
 	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
+	"github.com/HasanNugroho/starter-golang/internal/shared/modules"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -68,6 +69,7 @@ func AppsInit(router *gin.Engine) *app.Apps {
 		Log:    logApps,
 		DB:     db,
 		Redis:  redisClient,
+		Bus:    modules.EventNew(),
 		Router: router,
 	}
 

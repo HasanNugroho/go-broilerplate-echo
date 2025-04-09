@@ -1,8 +1,6 @@
 package roles
 
 import (
-	"fmt"
-
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/gin-gonic/gin"
@@ -22,7 +20,20 @@ func NewRoleModule(app *app.Apps) *RoleModule {
 }
 
 func (u *RoleModule) Register(app *app.Apps) error {
-	fmt.Println("Role Module Initialized")
+	app.Log.Info().Msg("Role Module Initialized")
+
+	permission := []string{
+		"roles:unassign",
+		"roles:read",
+		"roles:update",
+		"roles:delete",
+		"roles:assign",
+		"roles:unassign",
+	}
+
+	// Merge permission
+	app.Config.ModulePermissions = append(app.Config.ModulePermissions, permission...)
+
 	return nil
 }
 
@@ -30,10 +41,12 @@ func (a *RoleModule) Route(router *gin.RouterGroup, app *app.Apps) {
 	route := router.Group("/v1/roles")
 	{
 		route.Use(middleware.AuthMiddleware(app))
-		route.POST("", a.Handler.Create)
-		route.GET("", a.Handler.FindAll)
-		route.GET(":id", a.Handler.FindById)
-		route.PUT(":id", a.Handler.Update)
-		route.DELETE(":id", a.Handler.Delete)
+		route.POST("", middleware.CheckAccess([]string{"roles:create"}), a.Handler.Create)
+		route.GET("", middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}), a.Handler.FindAll)
+		route.GET(":id", middleware.CheckAccess([]string{"roles:read", "roles:assign", "roles:unassign"}), a.Handler.FindById)
+		route.PUT(":id", middleware.CheckAccess([]string{"roles:update"}), a.Handler.Update)
+		route.DELETE(":id", middleware.CheckAccess([]string{"roles:delete"}), a.Handler.Delete)
+		route.POST("/assign", middleware.CheckAccess([]string{"roles:assign"}), a.Handler.AssignUser)
+		route.POST("/unassign", middleware.CheckAccess([]string{"roles:unassign"}), a.Handler.AssignUser)
 	}
 }

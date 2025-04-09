@@ -4,21 +4,56 @@ import (
 	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
+	"github.com/HasanNugroho/starter-golang/internal/core/users"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
 type AuthHandler struct {
-	authService AuthService
+	authService IAuthService
 	app         *app.Apps
 }
 
-func NewAuthHandler(us AuthService, app *app.Apps) *AuthHandler {
+func NewAuthHandler(us IAuthService, app *app.Apps) *AuthHandler {
 	return &AuthHandler{
 		authService: us,
 		app:         app,
 	}
+}
+
+// Register godoc
+// @Summary      Register
+// @Description  Register an user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        user  body  users.UserCreateModel  true  "User Data"
+// @Success      200 {object}  shared.Response{data=users.UserCreateModel}
+// @Failure      400  {object}  shared.Response
+// @Failure      404  {object}  shared.Response
+// @Failure      500  {object}  shared.Response
+// @Router       /auth/register [post]
+func (c *AuthHandler) Register(ctx *gin.Context) {
+	var user users.UserCreateModel
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		utils.SendError(ctx, http.StatusBadRequest, "Failed to process request", "Invalid data format")
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(user); err != nil {
+		utils.SendError(ctx, http.StatusBadRequest, "Validation failed", err.Error())
+		return
+	}
+
+	err := c.authService.Register(ctx, c.app, &user)
+	if err != nil {
+		utils.SendError(ctx, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	utils.SendSuccess(ctx, http.StatusOK, "Register successful", nil)
 }
 
 // Login godoc

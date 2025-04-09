@@ -1,9 +1,16 @@
 package roles
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+
 	"github.com/HasanNugroho/starter-golang/internal/app"
+	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type RoleService struct {
@@ -18,30 +25,104 @@ func NewRoleService(app *app.Apps, repo IRoleRepository) *RoleService {
 	}
 }
 
-func (repo *RoleService) Create(ctx *gin.Context, user *RoleModel) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) Create(ctx *gin.Context, user *RoleUpdateModel) error {
+	if len(utils.Intersection(user.Permissions, r.app.Config.ModulePermissions)) < 1 {
+		return fmt.Errorf("permissions not found")
+	}
+	p, _ := json.Marshal(user.Permissions)
+
+	payload := entities.Role{
+		Name:        user.Name,
+		Permissions: string(p),
+	}
+
+	if err := r.repo.Create(ctx, &payload); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (repo *RoleService) FindById(ctx *gin.Context, id string) (RoleModel, error) {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) FindById(ctx *gin.Context, id string) (RoleModel, error) {
+	role, err := r.repo.FindById(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return RoleModel{}, fmt.Errorf("user with ID %s not found", id)
+		}
+		return RoleModel{}, err
+	}
+	return role, nil
 }
 
-func (repo *RoleService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) FindAll(ctx *gin.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
+	users, totalItems, err := r.repo.FindAll(ctx, filter)
+	if err != nil {
+		return shared.DataWithPagination{}, err
+	}
+
+	// build pagination meta
+	paginate := utils.BuildPagination(filter, int64(totalItems))
+
+	// Buat response dengan pagination
+	result := shared.DataWithPagination{
+		Items:  users,
+		Paging: paginate,
+	}
+
+	return result, nil
 }
 
-func (repo *RoleService) Update(ctx *gin.Context, id string, user *RoleUpdateModel) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) Update(ctx *gin.Context, id string, role *RoleUpdateModel) error {
+	currentRole, err := r.repo.FindById(ctx, id)
+	if err != nil {
+		return fmt.Errorf("role with ID %s not found: %w", id, err)
+	}
+
+	updatedRole := entities.Role{
+		Name: currentRole.Name,
+	}
+
+	if role.Name != "" {
+		updatedRole.Name = role.Name
+	}
+
+	if role.Permissions != nil {
+		if len(utils.Intersection(role.Permissions, r.app.Config.ModulePermissions)) < 1 {
+			return fmt.Errorf("permissions not found")
+		}
+		p, _ := json.Marshal(role.Permissions)
+		updatedRole.Permissions = string(p)
+	} else {
+		p, _ := json.Marshal(currentRole.Permissions)
+		updatedRole.Permissions = string(p)
+	}
+
+	return r.repo.Update(ctx, id, &updatedRole)
 }
 
-func (repo *RoleService) Delete(ctx *gin.Context, id string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) Delete(ctx *gin.Context, id string) error {
+	if _, err := r.repo.FindById(ctx, id); err != nil {
+		return fmt.Errorf("user with ID %s not found: %w", id, err)
+	}
+
+	if err := r.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete user with ID %s: %w", id, err)
+	}
+
+	return nil
 }
 
-func (repo *RoleService) AssignUser(ctx *gin.Context, userId string, roleId string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) AssignUser(ctx *gin.Context, payload *AssignRoleModel) error {
+	err := r.repo.AssignUser(ctx, payload.UserID, payload.RoleID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (repo *RoleService) UnassignUser(ctx *gin.Context, userId string, roleId string) error {
-	panic("not implemented") // TODO: Implement
+func (r *RoleService) UnassignUser(ctx *gin.Context, payload *AssignRoleModel) error {
+	err := r.repo.UnassignUser(ctx, payload.UserID, payload.RoleID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
