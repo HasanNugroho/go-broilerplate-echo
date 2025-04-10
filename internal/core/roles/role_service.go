@@ -1,7 +1,6 @@
 package roles
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
@@ -25,7 +24,7 @@ func NewRoleService(app *app.Apps, repo IRoleRepository) *RoleService {
 
 func (r *RoleService) Create(ctx echo.Context, user *RoleUpdateModel) error {
 	if len(utils.Intersection(user.Permissions, r.app.Config.ModulePermissions)) < 1 {
-		return fmt.Errorf("permissions not found")
+		return utils.NewBadRequest("permissions not found")
 	}
 
 	payload := entities.Role{
@@ -38,20 +37,16 @@ func (r *RoleService) Create(ctx echo.Context, user *RoleUpdateModel) error {
 	if err := r.repo.Create(ctx, &payload); err != nil {
 		return err
 	}
+
 	return nil
 }
 
 func (r *RoleService) FindById(ctx echo.Context, id string) (RoleModel, error) {
-	role, err := r.repo.FindById(ctx, id)
-	if err != nil {
-		return RoleModel{}, err
-	}
-	return role, nil
+	return r.repo.FindById(ctx, id)
 }
 
 func (r *RoleService) FindAll(ctx echo.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
 	users, totalItems, err := r.repo.FindAll(ctx, filter)
-	fmt.Println(totalItems)
 	if err != nil {
 		return shared.DataWithPagination{}, err
 	}
@@ -71,7 +66,7 @@ func (r *RoleService) FindAll(ctx echo.Context, filter *shared.PaginationFilter)
 func (r *RoleService) Update(ctx echo.Context, id string, role *RoleUpdateModel) error {
 	currentRole, err := r.repo.FindById(ctx, id)
 	if err != nil {
-		return fmt.Errorf("role with ID %s not found: %w", id, err)
+		return err
 	}
 
 	updatedRole := entities.Role{
@@ -84,7 +79,7 @@ func (r *RoleService) Update(ctx echo.Context, id string, role *RoleUpdateModel)
 
 	if role.Permissions != nil {
 		if len(utils.Intersection(role.Permissions, r.app.Config.ModulePermissions)) < 1 {
-			return fmt.Errorf("permissions not found")
+			return utils.NewBadRequest("permissions not found")
 		}
 		updatedRole.Permissions = role.Permissions
 	} else {
@@ -95,29 +90,13 @@ func (r *RoleService) Update(ctx echo.Context, id string, role *RoleUpdateModel)
 }
 
 func (r *RoleService) Delete(ctx echo.Context, id string) error {
-	if _, err := r.repo.FindById(ctx, id); err != nil {
-		return fmt.Errorf("user with ID %s not found: %w", id, err)
-	}
-
-	if err := r.repo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete user with ID %s: %w", id, err)
-	}
-
-	return nil
+	return r.repo.Delete(ctx, id)
 }
 
 func (r *RoleService) AssignUser(ctx echo.Context, payload *AssignRoleModel) error {
-	err := r.repo.AssignUser(ctx, payload.UserID, payload.RoleID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.repo.AssignUser(ctx, payload.UserID, payload.RoleID)
 }
 
 func (r *RoleService) UnassignUser(ctx echo.Context, payload *AssignRoleModel) error {
-	err := r.repo.UnassignUser(ctx, payload.UserID, payload.RoleID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return r.repo.UnassignUser(ctx, payload.UserID, payload.RoleID)
 }

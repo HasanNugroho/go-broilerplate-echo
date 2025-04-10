@@ -22,30 +22,3 @@ func SendError(c echo.Context, statusCode int, message string, err interface{}) 
 		Data:    err,
 	})
 }
-
-// func SendPagination(c echo.Context, status int, message string, items interface{}, page, limit, totalItems int, err interface{}) {
-// 	if limit < 1 {
-// 		limit = 10
-// 	}
-// 	if page < 1 {
-// 		page = 1
-// 	}
-
-// 	totalPages := int(math.Ceil(float64(totalItems) / float64(limit)))
-
-// 	// Struktur response dengan pagination
-// 	response := shared.Response{
-// 		Status:  status,
-// 		Message: message,
-// 		Data: shared.DataWithPagination{
-// 			Items: items,
-// 			Paging: shared.Pagination{
-// 				Limit:      limit,
-// 				Page:       page,
-// 				TotalItems: totalItems,
-// 				TotalPages: totalPages,
-// 			},
-// 		},
-// 	}
-
-// }

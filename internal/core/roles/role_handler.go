@@ -9,11 +9,13 @@ import (
 
 type RoleHandler struct {
 	roleService IRoleService
+	validate    *validator.Validate
 }
 
 func NewRoleHandler(rs IRoleService) *RoleHandler {
 	return &RoleHandler{
 		roleService: rs,
+		validate:    validator.New(),
 	}
 }
 
@@ -33,15 +35,12 @@ func NewRoleHandler(rs IRoleService) *RoleHandler {
 func (c *RoleHandler) Create(ctx echo.Context) error {
 	var role RoleUpdateModel
 	ctx.Bind(&role)
-	validate := validator.New()
 
-	if err := validate.Struct(role); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err.Error())
-		return err
+	if err := c.validate.Struct(role); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.roleService.Create(ctx, &role); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err.Error())
 		return err
 	}
 
@@ -65,17 +64,15 @@ func (c *RoleHandler) Create(ctx echo.Context) error {
 func (c *RoleHandler) FindAll(ctx echo.Context) error {
 	var filter shared.PaginationFilter
 
-	// Binding query parameters
 	if err := ctx.Bind(&filter); err != nil {
-		utils.SendError(ctx, 400, "failed to fetch roles", err)
-		return err
+		return utils.NewBadRequest(err.Error())
 	}
 
 	roles, err := c.roleService.FindAll(ctx, &filter)
 	if err != nil {
-		utils.SendError(ctx, 400, "failed to fetch roles", err)
 		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "roles retrieved successfully", roles)
 	return nil
 }
@@ -94,19 +91,15 @@ func (c *RoleHandler) FindAll(ctx echo.Context) error {
 func (c *RoleHandler) FindById(ctx echo.Context) error {
 	id := ctx.Param("id")
 
-	validate := validator.New()
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	role, err := c.roleService.FindById(ctx, id)
 	if err != nil {
-		// utils.SendError(ctx, 404, fmt.Sprintf("role with ID %s not found", id), err.Error())
-		// return err
-		utils.SendError(ctx, 500, "Failed to fetch role", err.Error())
 		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "role retrieved successfully", role)
 	return nil
 }
@@ -128,22 +121,18 @@ func (c *RoleHandler) FindById(ctx echo.Context) error {
 func (c *RoleHandler) Update(ctx echo.Context) error {
 	id := ctx.Param("id")
 	var role RoleUpdateModel
-	validate := validator.New()
 
 	ctx.Bind(&role)
 
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest("Invalid ID")
 	}
 
-	if err := validate.Struct(role); err != nil {
-		utils.SendError(ctx, 400, "Bad request", err.Error())
-		return err
+	if err := c.validate.Struct(role); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.roleService.Update(ctx, id, &role); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err)
 		return err
 	}
 
@@ -165,18 +154,15 @@ func (c *RoleHandler) Update(ctx echo.Context) error {
 func (c *RoleHandler) Delete(ctx echo.Context) error {
 	id := ctx.Param("id")
 
-	validate := validator.New()
-
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest("Invalid ID")
 	}
 
 	err := c.roleService.Delete(ctx, id)
 	if err != nil {
-		utils.SendError(ctx, 400, "failed to delete role", err)
 		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "role deleted successfully", nil)
 	return nil
 }
@@ -197,15 +183,12 @@ func (c *RoleHandler) Delete(ctx echo.Context) error {
 func (c *RoleHandler) AssignUser(ctx echo.Context) error {
 	var payload AssignRoleModel
 	ctx.Bind(&payload)
-	validate := validator.New()
 
-	if err := validate.Struct(payload); err != nil {
-		utils.SendError(ctx, 400, "Assign user failed", err.Error())
-		return err
+	if err := c.validate.Struct(payload); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.roleService.AssignUser(ctx, &payload); err != nil {
-		utils.SendError(ctx, 400, "Assign user failed", err.Error())
 		return err
 	}
 
@@ -229,15 +212,12 @@ func (c *RoleHandler) AssignUser(ctx echo.Context) error {
 func (c *RoleHandler) UnAssignUser(ctx echo.Context) error {
 	var payload AssignRoleModel
 	ctx.Bind(&payload)
-	validate := validator.New()
 
-	if err := validate.Struct(payload); err != nil {
-		utils.SendError(ctx, 400, "UnAssign user failed", err.Error())
-		return err
+	if err := c.validate.Struct(payload); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.roleService.UnassignUser(ctx, &payload); err != nil {
-		utils.SendError(ctx, 400, "UnAssign user failed", err.Error())
 		return err
 	}
 

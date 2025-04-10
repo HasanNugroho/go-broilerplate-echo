@@ -98,6 +98,10 @@ definitions:
         type: string
       password:
         type: string
+      roles_data:
+        items:
+          $ref: '#/definitions/roles.RoleModel'
+        type: array
       updated_at:
         type: string
     type: object
@@ -135,42 +139,6 @@ info:
   title: Starter Golang API
   version: "1.0"
 paths:
-  /auth/access-token:
-    post:
-      consumes:
-      - application/json
-      description: Renew token an user
-      parameters:
-      - description: Logout payload
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/auth.LogoutRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/shared.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/shared.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: Renew token
-      tags:
-      - auth
   /auth/login:
     post:
       consumes:
@@ -244,6 +212,42 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Logout
+      tags:
+      - auth
+  /auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Renew token an user
+      parameters:
+      - description: Logout payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/shared.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/shared.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Renew token
       tags:
       - auth
   /auth/register:

@@ -13,12 +13,14 @@ import (
 type AuthHandler struct {
 	authService IAuthService
 	app         *app.Apps
+	validate    *validator.Validate
 }
 
 func NewAuthHandler(us IAuthService, app *app.Apps) *AuthHandler {
 	return &AuthHandler{
 		authService: us,
 		app:         app,
+		validate:    validator.New(),
 	}
 }
 
@@ -37,19 +39,15 @@ func NewAuthHandler(us IAuthService, app *app.Apps) *AuthHandler {
 func (c *AuthHandler) Register(ctx echo.Context) error {
 	var user users.UserCreateModel
 	if err := ctx.Bind(&user); err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, "Failed to process request", "Invalid data format")
-		return err
+		return utils.NewBadRequest("Invalid data format")
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(user); err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, "Validation failed", err.Error())
-		return err
+	if err := c.validate.Struct(user); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	err := c.authService.Register(ctx, c.app, &user)
 	if err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, err.Error(), nil)
 		return err
 	}
 
@@ -72,19 +70,15 @@ func (c *AuthHandler) Register(ctx echo.Context) error {
 func (c *AuthHandler) Login(ctx echo.Context) error {
 	var user AuthModel
 	if err := ctx.Bind(&user); err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, "Failed to process request", "Invalid data format")
-		return err
+		return utils.NewBadRequest("Invalid data format")
 	}
 
-	validate := validator.New()
-	if err := validate.Struct(user); err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, "Validation failed", err.Error())
-		return err
+	if err := c.validate.Struct(user); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	token, err := c.authService.Login(ctx, c.app, user.Email, user.Password)
 	if err != nil {
-		utils.SendError(ctx, http.StatusUnauthorized, "Login failed", err.Error())
 		return err
 	}
 
@@ -108,7 +102,6 @@ func (c *AuthHandler) Login(ctx echo.Context) error {
 func (c *AuthHandler) Logout(ctx echo.Context) error {
 	err := c.authService.Logout(ctx, c.app)
 	if err != nil {
-		utils.SendError(ctx, http.StatusUnauthorized, "Logout failed", err.Error())
 		return err
 	}
 
@@ -127,12 +120,11 @@ func (c *AuthHandler) Logout(ctx echo.Context) error {
 // @Failure      400  {object}  shared.Response
 // @Failure      404  {object}  shared.Response
 // @Failure      500  {object}  shared.Response
-// @Router       /auth/access-token [post]
+// @Router       /auth/refresh-token [post]
 // @Security ApiKeyAuth
 func (c *AuthHandler) GenerateAccessToken(ctx echo.Context) error {
 	token, err := c.authService.GenerateAccessToken(ctx, c.app)
 	if err != nil {
-		utils.SendError(ctx, http.StatusBadRequest, "Renew token failed", err.Error())
 		return err
 	}
 

@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"fmt"
-
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -10,7 +8,7 @@ import (
 func HashPassword(password []byte) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.DefaultCost)
 	if err != nil {
-		return "", fmt.Errorf("error hashing password: %v", err)
+		return "", NewInternal("error hashing password")
 	}
 	return string(hash), nil
 }

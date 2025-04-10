@@ -31,7 +31,6 @@ func CheckAccess(permission []string) echo.MiddlewareFunc {
 			}
 
 			rawRoles, ok := data["permission"].([]interface{})
-			// app.GlobalApps.Log.Info().Msgf("Roles: %v", rawRoles)
 			if !ok {
 				utils.SendError(c, http.StatusForbidden, "Roles not found or wrong format", nil)
 				return nil

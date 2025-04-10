@@ -8,10 +8,7 @@ import (
 
 func BuildPagination(filter *shared.PaginationFilter, totalItems int64) shared.Pagination {
 	// Hitung total halaman
-	totalPages := 1
-	if totalItems > 1 {
-		totalPages = int(math.Ceil(float64(totalItems) / float64(filter.Limit)))
-	}
+	totalPages := int(math.Ceil(float64(totalItems) / float64(filter.Limit)))
 
 	// Buat response dengan pagination
 	return shared.Pagination{

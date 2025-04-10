@@ -30,9 +30,9 @@ func (a *AuthModule) Route(router *echo.Group, app *app.Apps) {
 	{
 		authRoutes.POST("/login", a.Handler.Login)
 		authRoutes.POST("/register", a.Handler.Register)
+		authRoutes.POST("/refresh-token", a.Handler.GenerateAccessToken)
 
 		authRoutes.Use(middleware.AuthMiddleware(app))
 		authRoutes.POST("/logout", a.Handler.Logout)
-		authRoutes.POST("/access-token", a.Handler.GenerateAccessToken)
 	}
 }

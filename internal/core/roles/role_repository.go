@@ -6,6 +6,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
+	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -25,27 +26,44 @@ func NewRoleRepository(app *app.Apps) *RoleRepository {
 }
 
 func (r *RoleRepository) Create(ctx echo.Context, role *entities.Role) error {
-	_, err := r.collection.InsertOne(ctx.Request().Context(), role)
-	return err
+	c := ctx.Request().Context()
+
+	_, err := r.collection.InsertOne(c, role)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return utils.NewConflict("data already exists")
+		}
+		return utils.NewInternal("failed to create data")
+	}
+
+	return nil
 }
 
 func (r *RoleRepository) FindById(ctx echo.Context, id string) (RoleModel, error) {
+	c := ctx.Request().Context()
+
 	var role RoleModel
-	objectID, _ := bson.ObjectIDFromHex(id)
+	objectID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return RoleModel{}, utils.NewBadRequest("invalid id format")
+	}
 
 	filter := bson.M{"_id": objectID}
-	err := r.collection.FindOne(ctx.Request().Context(), filter).Decode(&role)
-
+	err = r.collection.FindOne(c, filter).Decode(&role)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return RoleModel{}, nil
+			return RoleModel{}, utils.NewBadRequest("data not found")
 		}
-		return RoleModel{}, err
+
+		return RoleModel{}, utils.NewInternal("failed to find data")
 	}
+
 	return role, nil
 }
 
 func (r *RoleRepository) FindAll(ctx echo.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
+	c := ctx.Request().Context()
+
 	var roles []RoleModel
 	var totalItems int64
 
@@ -54,29 +72,34 @@ func (r *RoleRepository) FindAll(ctx echo.Context, filter *shared.PaginationFilt
 		SetLimit(int64(filter.Limit))
 	// opts.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
-	cursor, err := r.collection.Find(ctx.Request().Context(), bson.M{}, opts)
+	cursor, err := r.collection.Find(c, bson.M{}, opts)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, utils.NewInternal("failed to query data")
 	}
-	defer cursor.Close(ctx.Request().Context())
+	defer cursor.Close(c)
 
-	if err := cursor.All(ctx.Request().Context(), &roles); err != nil {
-		return nil, 0, err
+	if err := cursor.All(c, &roles); err != nil {
+		return nil, 0, utils.NewInternal("failed to decode data")
 	}
 
-	totalItems, err = r.collection.CountDocuments(ctx.Request().Context(), bson.M{})
+	totalItems, err = r.collection.CountDocuments(c, bson.M{})
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, utils.NewInternal("failed to count documents")
 	}
 
 	return roles, int(totalItems), nil
 }
 
 func (r *RoleRepository) Update(ctx echo.Context, id string, role *entities.Role) error {
-	objectId, _ := bson.ObjectIDFromHex(id)
-	filter := bson.M{"_id": objectId}
+	c := ctx.Request().Context()
 
-	result := r.collection.FindOneAndUpdate(ctx.Request().Context(), filter, bson.M{
+	objectId, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
+
+	filter := bson.M{"_id": objectId}
+	result := r.collection.FindOneAndUpdate(c, filter, bson.M{
 		"$set": bson.M{
 			"name":        role.Name,
 			"permissions": role.Permissions,
@@ -84,62 +107,77 @@ func (r *RoleRepository) Update(ctx echo.Context, id string, role *entities.Role
 		}})
 
 	if result.Err() != nil {
-		if result.Err() == mongo.ErrNoDocuments {
-			return nil
-		}
-		return result.Err()
+		return utils.NewInternal("failed to update data")
 	}
+
 	return nil
 }
 
 func (r *RoleRepository) Delete(ctx echo.Context, id string) error {
-	objectId, _ := bson.ObjectIDFromHex(id)
+	c := ctx.Request().Context()
+
+	objectId, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
+
 	filter := bson.M{"_id": objectId}
 
-	result := r.collection.FindOneAndDelete(ctx.Request().Context(), filter)
+	result := r.collection.FindOneAndDelete(c, filter)
 	if result.Err() != nil {
-		if result.Err() == mongo.ErrNoDocuments {
-			return nil
-		}
-		return result.Err()
+		return utils.NewInternal("failed to delete data")
 	}
+
 	return nil
 }
 
 func (r *RoleRepository) AssignUser(ctx echo.Context, userId string, roleId string) error {
+	c := ctx.Request().Context()
+
 	userCollection := r.app.DB.Collection("users")
-	objectUserID, _ := bson.ObjectIDFromHex(userId)
-	objectRoleID, _ := bson.ObjectIDFromHex(roleId)
+	objectUserID, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
+
+	objectRoleID, err := bson.ObjectIDFromHex(roleId)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
 
 	filter := bson.M{"_id": objectUserID}
 	update := bson.M{
 		"$addToSet": bson.M{"roles": objectRoleID},
 	}
-	_, err := userCollection.UpdateOne(ctx.Request().Context(), filter, update)
+
+	_, err = userCollection.UpdateOne(c, filter, update)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil
-		}
-		return err
+		return utils.NewInternal("failed to assign role to user")
 	}
+
 	return nil
 }
 
 func (r *RoleRepository) UnassignUser(ctx echo.Context, userId string, roleId string) error {
-	userCollection := r.app.DB.Collection("users")
-	objectUserID, _ := bson.ObjectIDFromHex(userId)
-	objectRoleID, _ := bson.ObjectIDFromHex(roleId)
+	c := ctx.Request().Context()
 
+	userCollection := r.app.DB.Collection("users")
+	objectUserID, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
+
+	objectRoleID, err := bson.ObjectIDFromHex(roleId)
+	if err != nil {
+		return utils.NewBadRequest("invalid id format")
+	}
 	filter := bson.M{"_id": objectUserID}
 	update := bson.M{
 		"$pull": bson.M{"roles": objectRoleID},
 	}
-	_, err := userCollection.UpdateOne(ctx.Request().Context(), filter, update)
+	_, err = userCollection.UpdateOne(c, filter, update)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil
-		}
-		return err
+		return utils.NewInternal("failed to unassign role to user")
 	}
 	return nil
 }

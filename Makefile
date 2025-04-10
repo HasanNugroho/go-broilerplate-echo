@@ -3,8 +3,7 @@ include .env
 
 # Default target
 .PHONY: all build run watch setup setup-db setup-db-down docker-run docker-down \
-        gen-di gen-docs create-migration migrate-up migrate-down migrate-force clean \
-        elastic
+        gen-di gen-docs clean 
 
 all: build test
 
@@ -69,28 +68,6 @@ docker-down:
 	@docker compose -f ./deploy/docker-compose.dev.yml down --rmi all
 
 ## ---------------- Migrations ----------------
-
-# Create new migration file
-create-migration:
-	@echo "📜 Creating migration: $(desc)..."
-	@migrate create -ext=sql -dir=db/migrations -seq $(desc)
-
-# Apply database migrations
-migrate-up:
-	@echo "⬆️ Running migrations..."
-	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose up
-
-# Rollback database migrations
-migrate-down:
-	@echo "⬇️ Rolling back migrations..."
-	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" -verbose down
-
-# Force rollback migrations
-migrate-force:
-	@echo "⬇️ Force migrations..."
-	@migrate -path=db/migrations -database "postgresql://${DBUSER}:${DBPASS}@${DBHOST}:${DBPORT}/${DBNAME}?sslmode=disable" force 1
-
-## ---------------- Utilities ----------------
 
 # Clean up generated files
 clean:

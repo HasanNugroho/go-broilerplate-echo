@@ -17,7 +17,7 @@ func AuthMiddleware(app *app.Apps) echo.MiddlewareFunc {
 			token, err := utils.ValidateToken(app, tokenString)
 			if err != nil || !token.Valid {
 				utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-				return err
+				return nil
 
 			}
 
@@ -25,7 +25,7 @@ func AuthMiddleware(app *app.Apps) echo.MiddlewareFunc {
 				c.Set("claims", claims)
 			} else {
 				utils.SendError(c, http.StatusUnauthorized, "Unauthorized", nil)
-				return err
+				return nil
 			}
 
 			return next(c)

@@ -9,11 +9,13 @@ import (
 
 type UserHandler struct {
 	userService IUserService
+	validate    *validator.Validate
 }
 
 func NewUserHandler(us IUserService) *UserHandler {
 	return &UserHandler{
 		userService: us,
+		validate:    validator.New(),
 	}
 }
 
@@ -33,15 +35,12 @@ func NewUserHandler(us IUserService) *UserHandler {
 func (c *UserHandler) Create(ctx echo.Context) error {
 	var user UserCreateModel
 	ctx.Bind(&user)
-	validate := validator.New()
 
-	if err := validate.Struct(user); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err.Error())
-		return err
+	if err := c.validate.Struct(user); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.userService.Create(ctx, &user); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err.Error())
 		return err
 	}
 
@@ -67,13 +66,11 @@ func (c *UserHandler) FindAll(ctx echo.Context) error {
 
 	// Binding query parameters
 	if err := ctx.Bind(&filter); err != nil {
-		utils.SendError(ctx, 400, "failed to fetch users", err)
-		return err
+		return utils.NewBadRequest(err.Error())
 	}
 
 	users, err := c.userService.FindAll(ctx, &filter)
 	if err != nil {
-		utils.SendError(ctx, 400, "failed to fetch users", err)
 		return err
 	}
 
@@ -95,19 +92,15 @@ func (c *UserHandler) FindAll(ctx echo.Context) error {
 func (c *UserHandler) FindById(ctx echo.Context) error {
 	id := ctx.Param("id")
 
-	validate := validator.New()
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	user, err := c.userService.FindById(ctx, id)
 	if err != nil {
-		// utils.SendError(ctx, 404, fmt.Sprintf("User with ID %s not found", id), err.Error())
-		// return err
-		utils.SendError(ctx, 500, "Failed to fetch user", err.Error())
 		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "User retrieved successfully", user)
 	return nil
 }
@@ -129,22 +122,18 @@ func (c *UserHandler) FindById(ctx echo.Context) error {
 func (c *UserHandler) Update(ctx echo.Context) error {
 	id := ctx.Param("id")
 	var user UserUpdateModel
-	validate := validator.New()
 
 	ctx.Bind(&user)
 
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
-	if err := validate.Struct(user); err != nil {
-		utils.SendError(ctx, 400, "Bad request", err.Error())
-		return err
+	if err := c.validate.Struct(user); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	if err := c.userService.Update(ctx, id, &user); err != nil {
-		utils.SendError(ctx, 400, "create data failed", err)
 		return err
 	}
 
@@ -166,18 +155,15 @@ func (c *UserHandler) Update(ctx echo.Context) error {
 func (c *UserHandler) Delete(ctx echo.Context) error {
 	id := ctx.Param("id")
 
-	validate := validator.New()
-
-	if err := validate.Var(id, "required"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", nil)
-		return err
+	if err := c.validate.Var(id, "required"); err != nil {
+		return utils.NewBadRequest(err.Error())
 	}
 
 	err := c.userService.Delete(ctx, id)
 	if err != nil {
-		utils.SendError(ctx, 400, "failed to delete user", err)
 		return err
 	}
+
 	utils.SendSuccess(ctx, 200, "user deleted successfully", nil)
 	return nil
 }
