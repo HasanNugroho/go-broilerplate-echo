@@ -1,111 +1,145 @@
 package roles
 
 import (
-	"encoding/json"
-	"errors"
+	"time"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
-	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type RoleRepository struct {
-	app *app.Apps
+	app        *app.Apps
+	collection *mongo.Collection
 }
 
 func NewRoleRepository(app *app.Apps) *RoleRepository {
 	return &RoleRepository{
-		app: app,
+		app:        app,
+		collection: app.DB.Collection("roles"),
 	}
 }
 
 func (r *RoleRepository) Create(ctx echo.Context, role *entities.Role) error {
-	result := r.app.DB.WithContext(ctx.Request().Context()).Create(&role)
-	return result.Error
+	_, err := r.collection.InsertOne(ctx.Request().Context(), role)
+	return err
 }
 
 func (r *RoleRepository) FindById(ctx echo.Context, id string) (RoleModel, error) {
-	var role entities.Role
-	result := r.app.DB.WithContext(ctx.Request().Context()).Where("id = ?", id).First(&role)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	var role RoleModel
+	objectID, _ := bson.ObjectIDFromHex(id)
+
+	filter := bson.M{"_id": objectID}
+	err := r.collection.FindOne(ctx.Request().Context(), filter).Decode(&role)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
 			return RoleModel{}, nil
 		}
-		return RoleModel{}, result.Error
-	}
-
-	var permission []string
-	err := json.Unmarshal([]byte(role.Permissions), &permission)
-	if err != nil {
 		return RoleModel{}, err
 	}
-
-	return RoleModel{
-		ID:          role.ID.String(),
-		Name:        role.Name,
-		Permissions: permission,
-	}, nil
+	return role, nil
 }
 
 func (r *RoleRepository) FindAll(ctx echo.Context, filter *shared.PaginationFilter) ([]RoleModel, int, error) {
-	var roles []entities.Role
+	var roles []RoleModel
 	var totalItems int64
 
-	query := r.app.DB.WithContext(ctx.Request().Context())
+	opts := options.Find().
+		SetSkip(int64((filter.Page - 1) * filter.Limit)).
+		SetLimit(int64(filter.Limit))
+	// opts.SetSort(bson.D{{Key: "created_at", Value: -1}})
 
-	// Hitung total data sebelum pagination
-	if err := query.Model(&entities.Role{}).Count(&totalItems).Error; err != nil {
+	cursor, err := r.collection.Find(ctx.Request().Context(), bson.M{}, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(ctx.Request().Context())
+
+	if err := cursor.All(ctx.Request().Context(), &roles); err != nil {
 		return nil, 0, err
 	}
 
-	// Query data dengan pagination
-	result := query.Scopes(utils.Paginate(filter)).
-		Select([]string{"id", "name", "permissions"}).
-		Find(&roles)
-	if result.Error != nil {
-		return nil, 0, result.Error
+	totalItems, err = r.collection.CountDocuments(ctx.Request().Context(), bson.M{})
+	if err != nil {
+		return nil, 0, err
 	}
 
-	// Konversi ke response model
-	var roleModels []RoleModel
-	for _, role := range roles {
-		var permission []string
-		err := json.Unmarshal([]byte(role.Permissions), &permission)
-		if err != nil {
-			continue
-		}
-
-		roleModels = append(roleModels, RoleModel{
-			ID:          (role.ID).String(),
-			Name:        role.Name,
-			Permissions: permission,
-		})
-	}
-
-	return roleModels, int(totalItems), nil
+	return roles, int(totalItems), nil
 }
 
 func (r *RoleRepository) Update(ctx echo.Context, id string, role *entities.Role) error {
-	return r.app.DB.WithContext(ctx.Request().Context()).Where("id = ?", id).Updates(role).Error
+	objectId, _ := bson.ObjectIDFromHex(id)
+	filter := bson.M{"_id": objectId}
+
+	result := r.collection.FindOneAndUpdate(ctx.Request().Context(), filter, bson.M{
+		"$set": bson.M{
+			"name":        role.Name,
+			"permissions": role.Permissions,
+			"updated_at":  time.Now(),
+		}})
+
+	if result.Err() != nil {
+		if result.Err() == mongo.ErrNoDocuments {
+			return nil
+		}
+		return result.Err()
+	}
+	return nil
 }
 
 func (r *RoleRepository) Delete(ctx echo.Context, id string) error {
-	return r.app.DB.WithContext(ctx.Request().Context()).Where("id", id).Delete(&entities.Role{}).Error
+	objectId, _ := bson.ObjectIDFromHex(id)
+	filter := bson.M{"_id": objectId}
+
+	result := r.collection.FindOneAndDelete(ctx.Request().Context(), filter)
+	if result.Err() != nil {
+		if result.Err() == mongo.ErrNoDocuments {
+			return nil
+		}
+		return result.Err()
+	}
+	return nil
 }
 
 func (r *RoleRepository) AssignUser(ctx echo.Context, userId string, roleId string) error {
-	return r.app.DB.WithContext(ctx.Request().Context()).Table("user_roles").Create(map[string]interface{}{
-		"user_id": userId,
-		"role_id": roleId,
-	}).Error
+	userCollection := r.app.DB.Collection("users")
+	objectUserID, _ := bson.ObjectIDFromHex(userId)
+	objectRoleID, _ := bson.ObjectIDFromHex(roleId)
+
+	filter := bson.M{"_id": objectUserID}
+	update := bson.M{
+		"$addToSet": bson.M{"roles": objectRoleID},
+	}
+	_, err := userCollection.UpdateOne(ctx.Request().Context(), filter, update)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *RoleRepository) UnassignUser(ctx echo.Context, userId string, roleId string) error {
-	return r.app.DB.WithContext(ctx.Request().Context()).
-		Table("user_roles").
-		Where("user_id = ? AND role_id = ?", userId, roleId).
-		Delete(nil).Error
+	userCollection := r.app.DB.Collection("users")
+	objectUserID, _ := bson.ObjectIDFromHex(userId)
+	objectRoleID, _ := bson.ObjectIDFromHex(roleId)
+
+	filter := bson.M{"_id": objectUserID}
+	update := bson.M{
+		"$pull": bson.M{"roles": objectRoleID},
+	}
+	_, err := userCollection.UpdateOne(ctx.Request().Context(), filter, update)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
+		return err
+	}
+	return nil
 }

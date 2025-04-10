@@ -8,8 +8,8 @@ import (
 
 type IUserRepository interface {
 	Create(ctx echo.Context, user *entities.User) error
-	FindByEmail(ctx echo.Context, email string) (entities.User, error)
-	FindById(ctx echo.Context, id string) (entities.User, error)
+	FindByEmail(ctx echo.Context, email string) (UserModel, error)
+	FindById(ctx echo.Context, id string) (UserModel, error)
 	FindAll(ctx echo.Context, filter *shared.PaginationFilter) ([]UserModelResponse, int, error)
 	Update(ctx echo.Context, id string, user *entities.User) error
 	Delete(ctx echo.Context, id string) error

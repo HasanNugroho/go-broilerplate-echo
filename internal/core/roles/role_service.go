@@ -1,16 +1,14 @@
 package roles
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type RoleService struct {
@@ -29,11 +27,12 @@ func (r *RoleService) Create(ctx echo.Context, user *RoleUpdateModel) error {
 	if len(utils.Intersection(user.Permissions, r.app.Config.ModulePermissions)) < 1 {
 		return fmt.Errorf("permissions not found")
 	}
-	p, _ := json.Marshal(user.Permissions)
 
 	payload := entities.Role{
 		Name:        user.Name,
-		Permissions: string(p),
+		Permissions: user.Permissions,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 
 	if err := r.repo.Create(ctx, &payload); err != nil {
@@ -45,9 +44,6 @@ func (r *RoleService) Create(ctx echo.Context, user *RoleUpdateModel) error {
 func (r *RoleService) FindById(ctx echo.Context, id string) (RoleModel, error) {
 	role, err := r.repo.FindById(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return RoleModel{}, fmt.Errorf("user with ID %s not found", id)
-		}
 		return RoleModel{}, err
 	}
 	return role, nil
@@ -55,6 +51,7 @@ func (r *RoleService) FindById(ctx echo.Context, id string) (RoleModel, error) {
 
 func (r *RoleService) FindAll(ctx echo.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
 	users, totalItems, err := r.repo.FindAll(ctx, filter)
+	fmt.Println(totalItems)
 	if err != nil {
 		return shared.DataWithPagination{}, err
 	}
@@ -89,11 +86,9 @@ func (r *RoleService) Update(ctx echo.Context, id string, role *RoleUpdateModel)
 		if len(utils.Intersection(role.Permissions, r.app.Config.ModulePermissions)) < 1 {
 			return fmt.Errorf("permissions not found")
 		}
-		p, _ := json.Marshal(role.Permissions)
-		updatedRole.Permissions = string(p)
+		updatedRole.Permissions = role.Permissions
 	} else {
-		p, _ := json.Marshal(currentRole.Permissions)
-		updatedRole.Permissions = string(p)
+		updatedRole.Permissions = currentRole.Permissions
 	}
 
 	return r.repo.Update(ctx, id, &updatedRole)

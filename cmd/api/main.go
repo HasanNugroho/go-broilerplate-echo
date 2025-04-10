@@ -6,6 +6,7 @@ import (
 	"github.com/HasanNugroho/starter-golang/cmd/docs"
 	"github.com/HasanNugroho/starter-golang/config"
 	"github.com/HasanNugroho/starter-golang/internal"
+	"github.com/HasanNugroho/starter-golang/internal/shared/middleware"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -30,7 +31,7 @@ func main() {
 	apps := internal.AppsInit(router)
 
 	// Middleware
-	// router.Use(middleware.ErrorHandler(apps))
+	router.Use(middleware.ErrorHandler(apps))
 
 	// Swagger Setup
 	loadSwagger(router, apps.Config)

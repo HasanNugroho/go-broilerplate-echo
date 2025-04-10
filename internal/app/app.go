@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var GlobalApps *Apps
@@ -17,7 +17,7 @@ type Apps struct {
 	Config   *config.Config
 	Log      *zerolog.Logger
 	Redis    *redis.Client
-	DB       *gorm.DB
+	DB       *mongo.Database
 	Bus      *modules.EventBus
 	Router   *echo.Echo
 	Features []Feature

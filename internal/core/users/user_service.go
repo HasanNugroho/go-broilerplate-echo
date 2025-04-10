@@ -3,12 +3,14 @@ package users
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/HasanNugroho/starter-golang/internal/core/entities"
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type UserService struct {
@@ -40,6 +42,7 @@ func (u *UserService) Create(ctx echo.Context, user *UserCreateModel) error {
 	payload := entities.User{
 		Email:    user.Email,
 		Name:     user.Name,
+		Roles:    []bson.ObjectID{},
 		Password: password,
 	}
 
@@ -52,19 +55,13 @@ func (u *UserService) Create(ctx echo.Context, user *UserCreateModel) error {
 func (u *UserService) FindById(ctx echo.Context, id string) (UserModel, error) {
 	user, err := u.repo.FindById(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, mongo.ErrFileNotFound) {
 			return UserModel{}, fmt.Errorf("user with ID %s not found", id)
 		}
 		return UserModel{}, err
 	}
 
-	return UserModel{
-		ID:        user.ID.String(),
-		Email:     user.Email,
-		Name:      user.Name,
-		UpdatedAt: user.UpdatedAt,
-		CreatedAt: user.CreatedAt,
-	}, nil
+	return user, nil
 }
 
 func (u *UserService) FindAll(ctx echo.Context, filter *shared.PaginationFilter) (shared.DataWithPagination, error) {
@@ -92,9 +89,11 @@ func (u *UserService) Update(ctx echo.Context, id string, user *UserUpdateModel)
 	}
 
 	updatedUser := entities.User{
-		Email:    user.Email,
-		Name:     user.Name,
-		Password: existingUser.Password,
+		Email:     user.Email,
+		Name:      user.Name,
+		Password:  existingUser.Password,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	if user.Password != "" {

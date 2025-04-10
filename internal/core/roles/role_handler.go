@@ -1,14 +1,10 @@
 package roles
 
 import (
-	"errors"
-	"fmt"
-
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type RoleHandler struct {
@@ -99,17 +95,15 @@ func (c *RoleHandler) FindById(ctx echo.Context) error {
 	id := ctx.Param("id")
 
 	validate := validator.New()
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 
 	role, err := c.roleService.FindById(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			utils.SendError(ctx, 404, fmt.Sprintf("role with ID %s not found", id), err.Error())
-			return err
-		}
+		// utils.SendError(ctx, 404, fmt.Sprintf("role with ID %s not found", id), err.Error())
+		// return err
 		utils.SendError(ctx, 500, "Failed to fetch role", err.Error())
 		return err
 	}
@@ -138,8 +132,8 @@ func (c *RoleHandler) Update(ctx echo.Context) error {
 
 	ctx.Bind(&role)
 
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 
@@ -173,8 +167,8 @@ func (c *RoleHandler) Delete(ctx echo.Context) error {
 
 	validate := validator.New()
 
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -36,7 +35,6 @@ func RateLimit(config *config.Config) echo.MiddlewareFunc {
 		},
 	}
 
-	fmt.Println("✅ RateLimiter middleware applied")
 	return middleware.RateLimiterWithConfig(cfg)
 }
 

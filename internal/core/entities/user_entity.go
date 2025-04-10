@@ -3,26 +3,15 @@ package entities
 import (
 	"time"
 
-	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type User struct {
-	ID        utils.ULID `gorm:"column:id;primaryKey;type:varchar(26)"`
-	Email     string     `gorm:"column:email"`
-	Name      string     `gorm:"column:name"`
-	Password  string     `gorm:"column:password"`
-	Roles     []Role     `gorm:"many2many:user_roles;constraint:OnDelete:CASCADE"`
-	CreatedAt time.Time  `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt time.Time  `gorm:"column:updated_at;autoUpdateTime"`
-	// DeletedAt gorm.DeletedAt `gorm:"index"`
-}
-
-func (u *User) TableName() string {
-	return "users"
-}
-
-func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	u.ID = utils.NewULID()
-	return nil
+	ID        bson.ObjectID   `bson:"_id,omitempty" json:"id"`
+	Email     string          `bson:"email" json:"email"`
+	Name      string          `bson:"name" json:"name"`
+	Password  string          `bson:"password" json:"password"`
+	Roles     []bson.ObjectID `bson:"roles" json:"roles"`
+	CreatedAt time.Time       `bson:"created_at,omitempty" json:"created_at,omitempty"`
+	UpdatedAt time.Time       `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 }

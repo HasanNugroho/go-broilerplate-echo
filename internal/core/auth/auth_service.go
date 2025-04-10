@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -26,7 +25,7 @@ func NewAuthService(repo users.IUserRepository) *AuthService {
 func (a *AuthService) Login(ctx echo.Context, app *app.Apps, email string, password string) (AuthResponse, error) {
 	existingUser, err := a.repo.FindByEmail(ctx, email)
 	if err != nil || existingUser.Email == "" {
-		return AuthResponse{}, fmt.Errorf("Incorrect email or password")
+		return AuthResponse{}, fmt.Errorf("Incorrect email or password %w", err)
 	}
 
 	if !utils.VerifyPassword(existingUser.Password, []byte(password)) {
@@ -34,24 +33,17 @@ func (a *AuthService) Login(ctx echo.Context, app *app.Apps, email string, passw
 	}
 
 	var allPermissions []string
-	for _, role := range existingUser.Roles {
-
-		var perms []string
-		err := json.Unmarshal([]byte(role.Permissions), &perms)
-		if err != nil {
-			panic(err)
-		}
-
-		allPermissions = append(allPermissions, perms...)
+	for _, role := range existingUser.RolesData {
+		allPermissions = append(allPermissions, role.Permissions...)
 	}
 
 	payload := map[string]interface{}{
-		"id":         (existingUser.ID).String(),
+		"id":         existingUser.ID,
 		"email":      existingUser.Email,
 		"name":       existingUser.Name,
 		"created_at": existingUser.CreatedAt,
 		"permission": allPermissions,
-		"roles":      existingUser.Roles,
+		"roles":      existingUser.RolesData,
 	}
 
 	accessToken, refreshToken, err := utils.GenerateAuthToken(app, payload)
@@ -145,12 +137,8 @@ func (a *AuthService) GenerateAccessToken(ctx echo.Context, app *app.Apps) (Auth
 
 	// Aggregate permissions
 	var allPermissions []string
-	for _, role := range existingUser.Roles {
-		var perms []string
-		if err := json.Unmarshal([]byte(role.Permissions), &perms); err != nil {
-			return AuthResponse{}, fmt.Errorf("failed to parse permissions: %w", err)
-		}
-		allPermissions = append(allPermissions, perms...)
+	for _, role := range existingUser.RolesData {
+		allPermissions = append(allPermissions, role.Permissions...)
 	}
 
 	// Parse refresh token from request body

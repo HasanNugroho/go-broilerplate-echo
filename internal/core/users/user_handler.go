@@ -1,14 +1,10 @@
 package users
 
 import (
-	"errors"
-	"fmt"
-
 	shared "github.com/HasanNugroho/starter-golang/internal/shared/model"
 	"github.com/HasanNugroho/starter-golang/internal/shared/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 )
 
 type UserHandler struct {
@@ -34,22 +30,23 @@ func NewUserHandler(us IUserService) *UserHandler {
 // @Failure      500  {object}  shared.Response
 // @Router       /users [post]
 // @Security ApiKeyAuth
-func (c *UserHandler) Create(ctx echo.Context) {
+func (c *UserHandler) Create(ctx echo.Context) error {
 	var user UserCreateModel
 	ctx.Bind(&user)
 	validate := validator.New()
 
 	if err := validate.Struct(user); err != nil {
 		utils.SendError(ctx, 400, "create data failed", err.Error())
-		return
+		return err
 	}
 
 	if err := c.userService.Create(ctx, &user); err != nil {
 		utils.SendError(ctx, 400, "create data failed", err.Error())
-		return
+		return err
 	}
 
 	utils.SendSuccess(ctx, 201, "users created successfully", nil)
+	return nil
 }
 
 // FindAllUsers godoc
@@ -99,17 +96,15 @@ func (c *UserHandler) FindById(ctx echo.Context) error {
 	id := ctx.Param("id")
 
 	validate := validator.New()
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 
 	user, err := c.userService.FindById(ctx, id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			utils.SendError(ctx, 404, fmt.Sprintf("User with ID %s not found", id), err.Error())
-			return err
-		}
+		// utils.SendError(ctx, 404, fmt.Sprintf("User with ID %s not found", id), err.Error())
+		// return err
 		utils.SendError(ctx, 500, "Failed to fetch user", err.Error())
 		return err
 	}
@@ -138,8 +133,8 @@ func (c *UserHandler) Update(ctx echo.Context) error {
 
 	ctx.Bind(&user)
 
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 
@@ -173,8 +168,8 @@ func (c *UserHandler) Delete(ctx echo.Context) error {
 
 	validate := validator.New()
 
-	if err := validate.Var(id, "required,ulid"); err != nil {
-		utils.SendError(ctx, 400, "Invalid ID", "ID is not a valid ULID")
+	if err := validate.Var(id, "required"); err != nil {
+		utils.SendError(ctx, 400, "Invalid ID", nil)
 		return err
 	}
 

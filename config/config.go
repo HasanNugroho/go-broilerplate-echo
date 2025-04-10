@@ -2,7 +2,6 @@ package config
 
 import (
 	"log"
-	"time"
 
 	"strings"
 
@@ -37,20 +36,10 @@ type ServerConfig struct {
 
 // RDBMSConfig menyimpan konfigurasi database
 type DatabaseConfig struct {
-	Enabled         bool          `mapstructure:"ACTIVATE_RDBMS"`
-	Driver          string        `mapstructure:"DBDRIVER"`
-	Host            string        `mapstructure:"DBHOST"`
-	Port            int           `mapstructure:"DBPORT"`
-	DB              string        `mapstructure:"DBNAME"`
-	User            string        `mapstructure:"DBUSER"`
-	Pass            string        `mapstructure:"DBPASS"`
-	TimeZone        string        `mapstructure:"DBTIMEZONE"`
-	LogLevel        int           `mapstructure:"DBLOGLEVEL"`
-	MaxIdleConns    int           `mapstructure:"DBMAXIDLECONNS"`
-	MaxOpenConns    int           `mapstructure:"DBMAXOPENCONNS"`
-	ConnMaxLifetime time.Duration `mapstructure:"DBCONNMAXLIFETIME"`
-	ConnMaxIdleTime time.Duration `mapstructure:"DBCONNMAXIDLETIME"`
-	Ssl             DBSsl         `mapstructure:",squash"`
+	Enabled  bool   `mapstructure:"ACTIVATE_RDBMS"`
+	URI      string `mapstructure:"MONGO_URI"`
+	Database string `mapstructure:"MONGO_DB"`
+	Timeout  int    `mapstructure:"MONGO_TIMEOUT"`
 }
 
 // DBSsl menyimpan konfigurasi SSL untuk database
@@ -77,7 +66,7 @@ type RedisConfig struct {
 // SecurityConfig menyimpan konfigurasi keamanan aplikasi
 type SecurityConfig struct {
 	CheckOrigin            bool   `mapstructure:"ACTIVATE_ORIGIN_VALIDATION"`
-	RateLimit              int    `mapstructure:"RATE_LIMIT" envDefault:60`
+	RateLimit              int    `mapstructure:"RATE_LIMIT" envDefault:"60"`
 	TrustedPlatform        string `mapstructure:"TRUSTED_PLATFORM"`
 	ExpectedHost           string `mapstructure:"EXPECTED_HOST"`
 	XFrameOptions          string `mapstructure:"X_FRAME_OPTIONS"`

@@ -11,13 +11,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var (
 	ProductionEnv = "production"
-	db            *gorm.DB
 	redisClient   *redis.Client
+	mongodb       *mongo.Database
 )
 
 func AppsInit(router *echo.Echo) *app.Apps {
@@ -27,22 +27,16 @@ func AppsInit(router *echo.Echo) *app.Apps {
 		log.Fatal().Msg("❌ Failed to initialize config: " + err.Error())
 	}
 
-	// Set production mode if applicable
-	// if appConfig.AppEnv == ProductionEnv {
-	// 	gin.SetMode(gin.ReleaseMode)
-	// }
-
 	// Initialize Logger
 	logApps := config.InitLogger(appConfig)
 
-	// Initialize RDBMS if enabled
+	// Initialize Database if enabled
 	if appConfig.DB.Enabled {
-		db, err = appConfig.DB.InitDB()
+		mongodb, err = appConfig.DB.InitMongo()
 		if err != nil {
 			logApps.Fatal().Msg(err.Error())
 			panic(1)
 		}
-		// defer config.ShutdownDB(db)
 	}
 
 	// Initialize Redis if enabled
@@ -67,7 +61,7 @@ func AppsInit(router *echo.Echo) *app.Apps {
 	app := &app.Apps{
 		Config: appConfig,
 		Log:    logApps,
-		DB:     db,
+		DB:     mongodb,
 		Redis:  redisClient,
 		Bus:    modules.EventNew(),
 		Router: router,

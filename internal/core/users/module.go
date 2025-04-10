@@ -40,6 +40,7 @@ func (u *UserModule) Route(router *echo.Group, app *app.Apps) {
 	userRoutes := router.Group("/v1/users")
 	userRoutes.Use(middleware.AuthMiddleware(app))
 	{
+		userRoutes.POST("", u.Handler.Create, middleware.CheckAccess([]string{"users:create"}))
 		userRoutes.GET("/", u.Handler.FindAll, middleware.CheckAccess([]string{"users:read"}))
 		userRoutes.GET("/:id", u.Handler.FindById, middleware.CheckAccess([]string{"users:read"}))
 		userRoutes.PUT("/:id", u.Handler.Update, middleware.CheckAccess([]string{"users:update"}))

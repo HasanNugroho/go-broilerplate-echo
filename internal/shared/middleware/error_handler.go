@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/HasanNugroho/starter-golang/internal/app"
@@ -13,6 +14,7 @@ func ErrorHandler(app *app.Apps) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			defer func() {
 				if err := recover(); err != nil {
+					fmt.Println(err)
 					app.Log.Error().Msgf("Recovered from panic: %v", err)
 					utils.SendError(c, http.StatusInternalServerError, "Internal Server Error", nil)
 				}
